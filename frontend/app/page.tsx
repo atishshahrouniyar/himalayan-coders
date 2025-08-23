@@ -43,6 +43,11 @@ export default function HomePage() {
                 <Users className="mr-2 h-5 w-5" />
                 Join as Professor
               </Button>
+              <Link href="/api-test">
+                <Button variant="outline" size="lg" className="px-8 py-3">
+                  Test API Integration
+                </Button>
+              </Link>
             </div>
           </div>
         </div>
