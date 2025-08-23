@@ -33,10 +33,10 @@ class GeminiMatchingService:
         1. Key strengths and expertise areas
         2. Research interests summary
         3. Technical skills assessment
-        4. Ideal project characteristics
+        4. Ideal professor characteristics
         5. Matching priorities
         
-        Return as JSON with keys: strengths, interests_summary, technical_skills, ideal_project, priorities
+        Return as JSON with keys: strengths, interests_summary, technical_skills, ideal_professor, priorities
         """
         
         try:
@@ -48,7 +48,7 @@ class GeminiMatchingService:
                 "strengths": student_data.get('primaryInterests', []),
                 "interests_summary": "Research interests analysis unavailable",
                 "technical_skills": student_data.get('programmingSkills', []),
-                "ideal_project": "Project preferences analysis unavailable",
+                "ideal_professor": "Professor preferences analysis unavailable",
                 "priorities": ["research_alignment", "skill_match"]
             }
     
@@ -74,11 +74,11 @@ class GeminiMatchingService:
         Please provide:
         1. Research focus and expertise areas
         2. Ideal student characteristics
-        3. Project requirements and expectations
+        3. Research requirements and expectations
         4. Mentoring style indicators
         5. Collaboration preferences
         
-        Return as JSON with keys: research_focus, ideal_student, project_requirements, mentoring_style, collaboration_preferences
+        Return as JSON with keys: research_focus, ideal_student, research_requirements, mentoring_style, collaboration_preferences
         """
         
         try:
@@ -89,112 +89,45 @@ class GeminiMatchingService:
             return {
                 "research_focus": professor_data.get('researchAreas', []),
                 "ideal_student": "Student preferences analysis unavailable",
-                "project_requirements": professor_data.get('prerequisites', ''),
+                "research_requirements": professor_data.get('prerequisites', ''),
                 "mentoring_style": "Mentoring style analysis unavailable",
                 "collaboration_preferences": ["research_alignment", "skill_match"]
             }
     
-    def analyze_project(self, project_data: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Analyze a research project using Gemini AI to extract key insights
-        """
-        prompt = f"""
-        Analyze this research project and provide insights for matching:
-        
-        Project Details:
-        - Title: {project_data.get('title', '')}
-        - Summary: {project_data.get('summary', '')}
-        - Description: {project_data.get('description', '')}
-        - Research Areas: {', '.join(project_data.get('researchAreas', []))}
-        - Techniques: {', '.join(project_data.get('techniques', []))}
-        - Desired Skills: {json.dumps(project_data.get('desiredSkills', []))}
-        - Hours per Week: {project_data.get('hoursPerWeek', 0)}
-        - Compensation: {project_data.get('compensation', '')}
-        - Location: {project_data.get('location', '')}
-        
-        Please provide:
-        1. Project complexity and scope
-        2. Required skills and experience level
-        3. Learning opportunities
-        4. Ideal candidate characteristics
-        5. Project benefits for students
-        
-        Return as JSON with keys: complexity, required_skills, learning_opportunities, ideal_candidate, benefits
-        """
-        
-        try:
-            response = self.model.generate_content(prompt)
-            return json.loads(response.text)
-        except Exception as e:
-            print(f"Error analyzing project: {e}")
-            return {
-                "complexity": "Project complexity analysis unavailable",
-                "required_skills": project_data.get('desiredSkills', []),
-                "learning_opportunities": "Learning opportunities analysis unavailable",
-                "ideal_candidate": "Ideal candidate analysis unavailable",
-                "benefits": ["research_experience", "skill_development"]
-            }
+
     
-    def calculate_ai_match_score(self, student_data: Dict[str, Any], professor_data: Dict[str, Any] = None, project_data: Dict[str, Any] = None) -> Tuple[float, List[str], Dict[str, Any]]:
+    def calculate_ai_match_score(self, student_data: Dict[str, Any], professor_data: Dict[str, Any]) -> Tuple[float, List[str], Dict[str, Any]]:
         """
-        Calculate an AI-enhanced match score between student and professor/project
+        Calculate an AI-enhanced match score between student and professor
         """
         # Analyze student profile
         student_analysis = self.analyze_student_profile(student_data)
         
-        if professor_data:
-            # Student-Professor matching
-            professor_analysis = self.analyze_professor_profile(professor_data)
-            
-            prompt = f"""
-            Calculate a match score between this student and professor:
-            
-            Student Analysis:
-            {json.dumps(student_analysis, indent=2)}
-            
-            Professor Analysis:
-            {json.dumps(professor_analysis, indent=2)}
-            
-            Consider:
-            1. Research area alignment (0-100)
-            2. Skill compatibility (0-100)
-            3. Academic level fit (0-100)
-            4. Availability and commitment match (0-100)
-            5. Learning and growth potential (0-100)
-            
-            Return as JSON with:
-            - overall_score: weighted average (0-100)
-            - highlights: list of key matching points
-            - detailed_scores: object with individual scores
-            - reasoning: explanation of the match
-            """
-            
-        elif project_data:
-            # Student-Project matching
-            project_analysis = self.analyze_project(project_data)
-            
-            prompt = f"""
-            Calculate a match score between this student and research project:
-            
-            Student Analysis:
-            {json.dumps(student_analysis, indent=2)}
-            
-            Project Analysis:
-            {json.dumps(project_analysis, indent=2)}
-            
-            Consider:
-            1. Research area alignment (0-100)
-            2. Skill requirements match (0-100)
-            3. Time commitment compatibility (0-100)
-            4. Learning opportunity fit (0-100)
-            5. Career development potential (0-100)
-            
-            Return as JSON with:
-            - overall_score: weighted average (0-100)
-            - highlights: list of key matching points
-            - detailed_scores: object with individual scores
-            - reasoning: explanation of the match
-            """
+        # Student-Professor matching
+        professor_analysis = self.analyze_professor_profile(professor_data)
+        
+        prompt = f"""
+        Calculate a match score between this student and professor:
+        
+        Student Analysis:
+        {json.dumps(student_analysis, indent=2)}
+        
+        Professor Analysis:
+        {json.dumps(professor_analysis, indent=2)}
+        
+        Consider:
+        1. Research area alignment (0-100)
+        2. Skill compatibility (0-100)
+        3. Academic level fit (0-100)
+        4. Availability and commitment match (0-100)
+        5. Learning and growth potential (0-100)
+        
+        Return as JSON with:
+        - overall_score: weighted average (0-100)
+        - highlights: list of key matching points
+        - detailed_scores: object with individual scores
+        - reasoning: explanation of the match
+        """
         
         try:
             response = self.model.generate_content(prompt)
@@ -208,74 +141,42 @@ class GeminiMatchingService:
         except Exception as e:
             print(f"Error calculating AI match score: {e}")
             # Fallback to basic matching
-            return self._calculate_basic_match_score(student_data, professor_data, project_data)
+            return self._calculate_basic_match_score(student_data, professor_data)
     
-    def _calculate_basic_match_score(self, student_data: Dict[str, Any], professor_data: Dict[str, Any] = None, project_data: Dict[str, Any] = None) -> Tuple[float, List[str], Dict[str, Any]]:
+    def _calculate_basic_match_score(self, student_data: Dict[str, Any], professor_data: Dict[str, Any]) -> Tuple[float, List[str], Dict[str, Any]]:
         """
         Fallback basic matching algorithm when AI analysis fails
         """
-        if professor_data:
-            # Basic student-professor matching
-            student_interests = set(student_data.get('primaryInterests', []))
-            professor_areas = set(professor_data.get('researchAreas', []))
-            
-            common_interests = student_interests & professor_areas
-            score = len(common_interests) / max(len(student_interests), 1) * 100
-            
-            return (
-                score,
-                list(common_interests),
-                {"overall_score": score, "highlights": list(common_interests)}
-            )
+        # Basic student-professor matching
+        student_interests = set(student_data.get('primaryInterests', []))
+        professor_areas = set(professor_data.get('researchAreas', []))
         
-        elif project_data:
-            # Basic student-project matching
-            student_interests = set(student_data.get('primaryInterests', []))
-            project_areas = set(project_data.get('researchAreas', []))
-            
-            common_interests = student_interests & project_areas
-            score = len(common_interests) / max(len(student_interests), 1) * 100
-            
-            return (
-                score,
-                list(common_interests),
-                {"overall_score": score, "highlights": list(common_interests)}
-            )
+        common_interests = student_interests & professor_areas
+        score = len(common_interests) / max(len(student_interests), 1) * 100
         
-        return (0, [], {})
+        return (
+            score,
+            list(common_interests),
+            {"overall_score": score, "highlights": list(common_interests)}
+        )
     
-    def generate_match_explanation(self, student_data: Dict[str, Any], professor_data: Dict[str, Any] = None, project_data: Dict[str, Any] = None, match_score: float = 0) -> str:
+    def generate_match_explanation(self, student_data: Dict[str, Any], professor_data: Dict[str, Any], match_score: float = 0) -> str:
         """
         Generate a human-readable explanation of the match
         """
-        if professor_data:
-            prompt = f"""
-            Generate a brief, friendly explanation of why this student and professor are a good match:
-            
-            Student: {student_data.get('firstName', '')} {student_data.get('lastName', '')} ({student_data.get('university', '')})
-            Interests: {', '.join(student_data.get('primaryInterests', []))}
-            
-            Professor: {professor_data.get('name', '')} ({professor_data.get('institution', '')})
-            Research Areas: {', '.join(professor_data.get('researchAreas', []))}
-            
-            Match Score: {match_score}/100
-            
-            Write 2-3 sentences explaining the match in a positive, encouraging tone.
-            """
-        elif project_data:
-            prompt = f"""
-            Generate a brief, friendly explanation of why this student and project are a good match:
-            
-            Student: {student_data.get('firstName', '')} {student_data.get('lastName', '')} ({student_data.get('university', '')})
-            Interests: {', '.join(student_data.get('primaryInterests', []))}
-            
-            Project: {project_data.get('title', '')}
-            Research Areas: {', '.join(project_data.get('researchAreas', []))}
-            
-            Match Score: {match_score}/100
-            
-            Write 2-3 sentences explaining the match in a positive, encouraging tone.
-            """
+        prompt = f"""
+        Generate a brief, friendly explanation of why this student and professor are a good match:
+        
+        Student: {student_data.get('firstName', '')} {student_data.get('lastName', '')} ({student_data.get('university', '')})
+        Interests: {', '.join(student_data.get('primaryInterests', []))}
+        
+        Professor: {professor_data.get('name', '')} ({professor_data.get('institution', '')})
+        Research Areas: {', '.join(professor_data.get('researchAreas', []))}
+        
+        Match Score: {match_score}/100
+        
+        Write 2-3 sentences explaining the match in a positive, encouraging tone.
+        """
         
         try:
             response = self.model.generate_content(prompt)
@@ -283,3 +184,28 @@ class GeminiMatchingService:
         except Exception as e:
             print(f"Error generating match explanation: {e}")
             return f"This match has a score of {match_score}/100 based on research area alignment and skill compatibility."
+
+    def analyze_match(self, student_data: Dict[str, Any], professor_data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Analyze a match between a student and professor using Gemini AI
+        """
+        try:
+            score, highlights, detailed_analysis = self.calculate_ai_match_score(student_data, professor_data)
+            explanation = self.generate_match_explanation(student_data, professor_data, score)
+            
+            return {
+                'score': score,
+                'explanation': explanation,
+                'highlights': highlights,
+                'analysis': detailed_analysis
+            }
+        except Exception as e:
+            print(f"Error in analyze_match: {e}")
+            # Fallback to basic matching
+            score, highlights, _ = self._calculate_basic_match_score(student_data, professor_data)
+            return {
+                'score': score,
+                'explanation': f"This match has a score of {score}/100 based on research area alignment and skill compatibility.",
+                'highlights': highlights,
+                'analysis': {'overall_score': score, 'highlights': highlights}
+            }
