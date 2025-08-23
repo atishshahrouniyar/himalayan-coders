@@ -1,5 +1,4 @@
 from django.db import models
-from django.contrib.auth.models import User
 from django.contrib.postgres.fields import ArrayField
 import uuid
 
@@ -24,7 +23,6 @@ class StudentProfile(models.Model):
     ]
     
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='student_profile')
     firstName = models.CharField(max_length=100)
     lastName = models.CharField(max_length=100)
     preferredName = models.CharField(max_length=100, blank=True, null=True)
@@ -32,8 +30,8 @@ class StudentProfile(models.Model):
     university = models.CharField(max_length=200)
     department = models.CharField(max_length=200)
     degreeLevel = models.CharField(max_length=10, choices=DEGREE_CHOICES)
-    year = models.IntegerField()
-    semester = models.IntegerField()
+    year = models.IntegerField(blank=True, null=True)
+    semester = models.IntegerField(blank=True, null=True)
     gpa = models.DecimalField(max_digits=3, decimal_places=2, blank=True, null=True)
     graduationTarget = models.CharField(max_length=100, blank=True, null=True)
     location = models.CharField(max_length=200, blank=True, null=True)
@@ -59,7 +57,7 @@ class StudentProfile(models.Model):
     coursework = ArrayField(models.CharField(max_length=200), default=list)
     
     # Availability
-    hoursPerWeek = models.IntegerField()
+    hoursPerWeek = models.IntegerField(blank=True, null=True)
     startDate = models.DateField(blank=True, null=True)
     duration = models.CharField(max_length=20, blank=True, null=True)
     compensation = models.CharField(max_length=20, blank=True, null=True)
@@ -89,7 +87,6 @@ class StudentProfile(models.Model):
 
 class ProfessorProfile(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='professor_profile')
     name = models.CharField(max_length=200)
     title = models.CharField(max_length=200)
     department = models.CharField(max_length=200)
@@ -139,6 +136,7 @@ class Match(models.Model):
     
     class Meta:
         db_table = 'matches'
+        unique_together = ['student', 'professor']  # Prevent duplicate matches
     
     def __str__(self):
         return f"Match: {self.student.firstName} {self.student.lastName} - {self.professor.name}"

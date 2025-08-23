@@ -322,19 +322,33 @@ class MatchViewSet(viewsets.ModelViewSet):
                     print(f"AI analysis failed: {e}")
                     ai_score = score
 
-            # Create match
-            match = Match.objects.create(
+            # Create or update match
+            match, created = Match.objects.get_or_create(
                 student=student,
                 professor=professor,
-                score=score,
-                aiScore=ai_score,
-                aiExplanation=ai_explanation,
-                aiAnalysis=ai_analysis,
-                detailedScores=detailed_scores,
-                highlights=self._generate_highlights(student, professor),
-                studentInterests=student.primaryInterests,
-                professorInterests=professor.researchAreas
+                defaults={
+                    'score': score,
+                    'aiScore': ai_score,
+                    'aiExplanation': ai_explanation,
+                    'aiAnalysis': ai_analysis,
+                    'detailedScores': detailed_scores,
+                    'highlights': self._generate_highlights(student, professor),
+                    'studentInterests': student.primaryInterests,
+                    'professorInterests': professor.researchAreas
+                }
             )
+            
+            # Update existing match if it already exists and new score is higher
+            if not created and score > match.score:
+                match.score = score
+                match.aiScore = ai_score
+                match.aiExplanation = ai_explanation
+                match.aiAnalysis = ai_analysis
+                match.detailedScores = detailed_scores
+                match.highlights = self._generate_highlights(student, professor)
+                match.studentInterests = student.primaryInterests
+                match.professorInterests = professor.researchAreas
+                match.save()
             matches.append(match)
 
         return matches

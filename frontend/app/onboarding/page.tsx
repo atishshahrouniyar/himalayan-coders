@@ -14,9 +14,11 @@ import {
   FileText, 
   CheckCircle,
   ArrowRight,
-  ArrowLeft
+  ArrowLeft,
+  Loader2
 } from 'lucide-react'
 import { OnboardingStep, OnboardingProgress } from '@/types'
+import { studentApi, professorApi } from '@/lib/api'
 
 const ONBOARDING_STEPS: OnboardingStep[] = [
   {
@@ -75,6 +77,8 @@ export default function OnboardingPage() {
   const [currentStep, setCurrentStep] = useState(0)
   const [userRole, setUserRole] = useState<'student' | 'professor' | null>(null)
   const [profileData, setProfileData] = useState<any>({})
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   
   const progress: OnboardingProgress = {
     currentStep: currentStep + 1,
@@ -95,9 +99,94 @@ export default function OnboardingPage() {
     }
   }
 
-  const handleComplete = () => {
-    // TODO: Save profile data and redirect to dashboard
-    router.push('/dashboard')
+  const handleComplete = async () => {
+    if (!userRole) {
+      setError('Please select a role')
+      return
+    }
+
+    // Validate required fields
+    const requiredFields = ['firstName', 'lastName', 'email', 'university']
+    const missingFields = requiredFields.filter(field => !profileData[field])
+    
+    if (missingFields.length > 0) {
+      setError(`Please fill in all required fields: ${missingFields.join(', ')}`)
+      return
+    }
+
+    setIsSubmitting(true)
+    setError(null)
+
+    try {
+      // Prepare the profile data
+      const profilePayload = {
+        firstName: profileData.firstName,
+        lastName: profileData.lastName,
+        email: profileData.email,
+        university: profileData.university,
+        primaryInterests: profileData.interests || [],
+        programmingSkills: profileData.programmingSkills || [],
+        startDate: profileData.startDate,
+        githubUrl: profileData.githubUrl,
+        // Add default values for required fields
+        department: profileData.department || 'Computer Science',
+        degreeLevel: profileData.degreeLevel || 'BS',
+        gpa: profileData.gpa || 3.5,
+        availability: profileData.availability || 'Full-time',
+        researchExperience: profileData.researchExperience || 'None',
+        // Optional fields - no default values needed
+        year: profileData.year,
+        semester: profileData.semester,
+        hoursPerWeek: profileData.hoursPerWeek,
+        publications: profileData.publications || [],
+        awards: profileData.awards || [],
+        languages: profileData.languages || ['English'],
+        linkedinUrl: profileData.linkedinUrl || '',
+        personalWebsite: profileData.personalWebsite || '',
+        bio: profileData.bio || '',
+        acceptingStudents: userRole === 'professor' ? true : undefined,
+        researchAreas: userRole === 'professor' ? (profileData.interests || []) : undefined,
+        currentPosition: userRole === 'professor' ? 'Professor' : undefined,
+        yearsOfExperience: userRole === 'professor' ? 5 : undefined,
+        labWebsite: userRole === 'professor' ? profileData.personalWebsite || '' : undefined,
+        fundingAvailable: userRole === 'professor' ? true : undefined,
+        mentorshipStyle: userRole === 'professor' ? 'Collaborative' : undefined,
+        publications: userRole === 'professor' ? (profileData.publications || []) : undefined,
+        grants: userRole === 'professor' ? (profileData.grants || []) : undefined,
+        collaborations: userRole === 'professor' ? (profileData.collaborations || []) : undefined,
+        teachingExperience: userRole === 'professor' ? (profileData.teachingExperience || []) : undefined,
+        industryConnections: userRole === 'professor' ? (profileData.industryConnections || []) : undefined,
+        internationalExperience: userRole === 'professor' ? (profileData.internationalExperience || []) : undefined,
+        patents: userRole === 'professor' ? (profileData.patents || []) : undefined,
+        honors: userRole === 'professor' ? (profileData.honors || []) : undefined,
+        service: userRole === 'professor' ? (profileData.service || []) : undefined,
+        outreach: userRole === 'professor' ? (profileData.outreach || []) : undefined,
+        diversity: userRole === 'professor' ? (profileData.diversity || []) : undefined,
+        innovation: userRole === 'professor' ? (profileData.innovation || []) : undefined,
+        leadership: userRole === 'professor' ? (profileData.leadership || []) : undefined,
+        mentorship: userRole === 'professor' ? (profileData.mentorship || []) : undefined,
+        research: userRole === 'professor' ? (profileData.research || []) : undefined,
+        education: userRole === 'professor' ? (profileData.education || []) : undefined,
+        work: userRole === 'professor' ? (profileData.work || []) : undefined,
+        skills: userRole === 'professor' ? (profileData.skills || []) : undefined,
+        projects: userRole === 'professor' ? (profileData.projects || []) : undefined,
+      }
+
+      // Submit to appropriate API based on user role
+      if (userRole === 'student') {
+        await studentApi.create(profilePayload)
+      } else {
+        await professorApi.create(profilePayload)
+      }
+
+      // Redirect to dashboard on success
+      router.push('/dashboard')
+    } catch (err: any) {
+      console.error('Error creating profile:', err)
+      setError(err.message || 'Failed to create profile. Please try again.')
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   const renderStepContent = () => {
@@ -386,12 +475,19 @@ export default function OnboardingPage() {
           </CardContent>
         </Card>
 
+        {/* Error Message */}
+        {error && (
+          <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <p className="text-red-600 text-sm">{error}</p>
+          </div>
+        )}
+
         {/* Navigation */}
         <div className="flex justify-between">
           <Button
             variant="outline"
             onClick={handlePrevious}
-            disabled={currentStep === 0}
+            disabled={currentStep === 0 || isSubmitting}
             className="flex items-center space-x-2"
           >
             <ArrowLeft className="h-4 w-4" />
@@ -401,15 +497,25 @@ export default function OnboardingPage() {
           {currentStep === ONBOARDING_STEPS.length - 1 ? (
             <Button
               onClick={handleComplete}
+              disabled={isSubmitting}
               className="bg-research-600 hover:bg-research-700 flex items-center space-x-2"
             >
-              Complete Setup
-              <CheckCircle className="h-4 w-4" />
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Creating Profile...
+                </>
+              ) : (
+                <>
+                  Complete Setup
+                  <CheckCircle className="h-4 w-4" />
+                </>
+              )}
             </Button>
           ) : (
             <Button
               onClick={handleNext}
-              disabled={!userRole && currentStep === 0}
+              disabled={(!userRole && currentStep === 0) || isSubmitting}
               className="bg-research-600 hover:bg-research-700 flex items-center space-x-2"
             >
               Next
