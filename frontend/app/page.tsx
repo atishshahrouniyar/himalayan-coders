@@ -48,6 +48,11 @@ export default function HomePage() {
                   Test API Integration
                 </Button>
               </Link>
+              <Link href="/ai-match-test">
+                <Button variant="outline" size="lg" className="px-8 py-3 bg-purple-600 text-white hover:bg-purple-700">
+                  AI Matching Test
+                </Button>
+              </Link>
             </div>
           </div>
         </div>

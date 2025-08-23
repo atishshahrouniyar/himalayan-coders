@@ -159,3 +159,6 @@ CORS_ALLOW_HEADERS = [
     'x-csrftoken',
     'x-requested-with',
 ]
+
+# Gemini AI Configuration
+GEMINI_API_KEY = config('GEMINI_API_KEY', default='AIzaSyAPqByIADPP4oJXd1e3rcrirG8mCJVOGks')

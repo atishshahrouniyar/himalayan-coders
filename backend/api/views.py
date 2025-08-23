@@ -9,6 +9,7 @@ from .serializers import (
     StudentProfileSerializer, ProfessorProfileSerializer, ResearchProjectSerializer, MatchSerializer,
     StudentProfileListSerializer, ProfessorProfileListSerializer, ResearchProjectListSerializer
 )
+from .gemini_service import GeminiMatchingService
 
 class StudentProfileViewSet(viewsets.ModelViewSet):
     queryset = StudentProfile.objects.all()
@@ -158,11 +159,16 @@ class MatchViewSet(viewsets.ModelViewSet):
     serializer_class = MatchSerializer
     permission_classes = [AllowAny]
     
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.gemini_service = GeminiMatchingService()
+    
     @action(detail=False, methods=['post'])
     def generate_matches(self, request):
-        """Generate matches for a student"""
+        """Generate AI-enhanced matches for a student"""
         student_id = request.data.get('student_id')
         match_type = request.data.get('match_type', 'professor')  # 'professor' or 'project'
+        use_ai = request.data.get('use_ai', True)  # Enable/disable AI enhancement
         
         if not student_id:
             return Response({
@@ -178,69 +184,162 @@ class MatchViewSet(viewsets.ModelViewSet):
                 'message': 'Student not found'
             }, status=status.HTTP_404_NOT_FOUND)
         
-        # Simple matching algorithm (can be enhanced)
+        # Generate AI-enhanced matches
         if match_type == 'professor':
-            matches = self._match_student_to_professors(student)
+            matches = self._match_student_to_professors(student, use_ai)
         else:
-            matches = self._match_student_to_projects(student)
+            matches = self._match_student_to_projects(student, use_ai)
         
         return Response({
             'success': True,
             'data': matches,
-            'total': len(matches)
+            'total': len(matches),
+            'ai_enhanced': use_ai
         })
     
-    def _match_student_to_professors(self, student):
-        """Simple matching algorithm for student to professors"""
+    def _match_student_to_professors(self, student, use_ai=True):
+        """AI-enhanced matching algorithm for student to professors"""
         professors = ProfessorProfile.objects.filter(acceptingStudents=True)
         matches = []
         
         for professor in professors:
-            # Calculate basic match score based on research area overlap
-            common_interests = set(student.primaryInterests) & set(professor.researchAreas)
-            score = len(common_interests) / max(len(student.primaryInterests), 1) * 100
-            
-            if score > 0:  # Only include matches with some overlap
+            if use_ai:
+                # Use AI-enhanced matching
+                ai_score, ai_highlights, ai_analysis = self.gemini_service.calculate_ai_match_score(
+                    student_data=StudentProfileSerializer(student).data,
+                    professor_data=ProfessorProfileSerializer(professor).data
+                )
+                
+                # Generate AI explanation
+                ai_explanation = self.gemini_service.generate_match_explanation(
+                    student_data=StudentProfileSerializer(student).data,
+                    professor_data=ProfessorProfileSerializer(professor).data,
+                    match_score=ai_score
+                )
+                
+                # Use AI score if available, otherwise fallback to basic score
+                score = ai_score if ai_score > 0 else self._calculate_basic_score(student, professor)
+                highlights = ai_highlights if ai_highlights else self._get_common_interests(student, professor)
+                
                 match = Match.objects.create(
                     student=student,
                     professor=professor,
                     matchType='professor',
                     score=score,
-                    highlights=list(common_interests),
+                    highlights=highlights,
                     studentInterests=student.primaryInterests,
                     professorInterests=professor.researchAreas,
-                    availabilityFit=True,  # Simplified for now
-                    levelFit=True  # Simplified for now
+                    availabilityFit=True,
+                    levelFit=True,
+                    aiScore=ai_score if ai_score > 0 else None,
+                    aiExplanation=ai_explanation,
+                    aiAnalysis=ai_analysis,
+                    detailedScores=ai_analysis.get('detailed_scores', {})
                 )
-                matches.append(MatchSerializer(match).data)
+            else:
+                # Use basic matching
+                score = self._calculate_basic_score(student, professor)
+                highlights = self._get_common_interests(student, professor)
+                
+                match = Match.objects.create(
+                    student=student,
+                    professor=professor,
+                    matchType='professor',
+                    score=score,
+                    highlights=highlights,
+                    studentInterests=student.primaryInterests,
+                    professorInterests=professor.researchAreas,
+                    availabilityFit=True,
+                    levelFit=True
+                )
+            
+            matches.append(MatchSerializer(match).data)
         
+        # Sort by score (highest first)
+        matches.sort(key=lambda x: x['score'], reverse=True)
         return matches
     
-    def _match_student_to_projects(self, student):
-        """Simple matching algorithm for student to projects"""
+    def _match_student_to_projects(self, student, use_ai=True):
+        """AI-enhanced matching algorithm for student to projects"""
         projects = ResearchProject.objects.filter(isActive=True)
         matches = []
         
         for project in projects:
-            # Calculate basic match score based on research area overlap
-            common_interests = set(student.primaryInterests) & set(project.researchAreas)
-            score = len(common_interests) / max(len(student.primaryInterests), 1) * 100
-            
-            if score > 0:  # Only include matches with some overlap
+            if use_ai:
+                # Use AI-enhanced matching
+                ai_score, ai_highlights, ai_analysis = self.gemini_service.calculate_ai_match_score(
+                    student_data=StudentProfileSerializer(student).data,
+                    project_data=ResearchProjectSerializer(project).data
+                )
+                
+                # Generate AI explanation
+                ai_explanation = self.gemini_service.generate_match_explanation(
+                    student_data=StudentProfileSerializer(student).data,
+                    project_data=ResearchProjectSerializer(project).data,
+                    match_score=ai_score
+                )
+                
+                # Use AI score if available, otherwise fallback to basic score
+                score = ai_score if ai_score > 0 else self._calculate_basic_project_score(student, project)
+                highlights = ai_highlights if ai_highlights else self._get_common_project_interests(student, project)
+                
                 match = Match.objects.create(
                     student=student,
                     project=project,
                     matchType='project',
                     score=score,
-                    highlights=list(common_interests),
+                    highlights=highlights,
                     studentInterests=student.primaryInterests,
                     professorInterests=project.professor.researchAreas,
-                    availabilityFit=True,  # Simplified for now
-                    levelFit=True  # Simplified for now
+                    availabilityFit=True,
+                    levelFit=True,
+                    aiScore=ai_score if ai_score > 0 else None,
+                    aiExplanation=ai_explanation,
+                    aiAnalysis=ai_analysis,
+                    detailedScores=ai_analysis.get('detailed_scores', {})
                 )
-                matches.append(MatchSerializer(match).data)
+            else:
+                # Use basic matching
+                score = self._calculate_basic_project_score(student, project)
+                highlights = self._get_common_project_interests(student, project)
+                
+                match = Match.objects.create(
+                    student=student,
+                    project=project,
+                    matchType='project',
+                    score=score,
+                    highlights=highlights,
+                    studentInterests=student.primaryInterests,
+                    professorInterests=project.professor.researchAreas,
+                    availabilityFit=True,
+                    levelFit=True
+                )
+            
+            matches.append(MatchSerializer(match).data)
         
+        # Sort by score (highest first)
+        matches.sort(key=lambda x: x['score'], reverse=True)
         return matches
+    
+    def _calculate_basic_score(self, student, professor):
+        """Calculate basic match score based on research area overlap"""
+        common_interests = set(student.primaryInterests) & set(professor.researchAreas)
+        return len(common_interests) / max(len(student.primaryInterests), 1) * 100
+    
+    def _get_common_interests(self, student, professor):
+        """Get common interests between student and professor"""
+        common_interests = set(student.primaryInterests) & set(professor.researchAreas)
+        return list(common_interests)
+    
+    def _calculate_basic_project_score(self, student, project):
+        """Calculate basic match score based on project research area overlap"""
+        common_interests = set(student.primaryInterests) & set(project.researchAreas)
+        return len(common_interests) / max(len(student.primaryInterests), 1) * 100
+    
+    def _get_common_project_interests(self, student, project):
+        """Get common interests between student and project"""
+        common_interests = set(student.primaryInterests) & set(project.researchAreas)
+        return list(common_interests)
 
 # Additional utility views
 class SearchViewSet(viewsets.ViewSet):

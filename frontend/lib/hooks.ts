@@ -228,8 +228,8 @@ export const useGenerateMatches = () => {
   const queryClient = useQueryClient()
   
   return useMutation({
-    mutationFn: ({ studentId, matchType }: { studentId: string; matchType: 'professor' | 'project' }) =>
-      matchApi.generateMatches(studentId, matchType),
+    mutationFn: ({ studentId, matchType, useAI }: { studentId: string; matchType: 'professor' | 'project'; useAI?: boolean }) =>
+      matchApi.generateMatches(studentId, matchType, useAI ?? true),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.matches })
     },

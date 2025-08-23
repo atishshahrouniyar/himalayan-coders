@@ -156,6 +156,12 @@ export interface Match {
   availabilityFit: boolean;
   levelFit: boolean;
   
+  // AI-enhanced fields
+  aiScore?: number;
+  aiExplanation?: string;
+  aiAnalysis?: Record<string, any>;
+  detailedScores?: Record<string, any>;
+  
   createdAt: Date;
 }
 

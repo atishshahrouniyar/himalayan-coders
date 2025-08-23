@@ -39,7 +39,7 @@ class MatchSerializer(serializers.ModelSerializer):
     class Meta:
         model = Match
         fields = '__all__'
-        read_only_fields = ['id', 'createdAt']
+        read_only_fields = ['id', 'createdAt', 'aiScore', 'aiExplanation', 'aiAnalysis', 'detailedScores']
 
 # Simplified serializers for list views
 class StudentProfileListSerializer(serializers.ModelSerializer):

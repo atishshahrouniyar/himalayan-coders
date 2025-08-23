@@ -223,12 +223,13 @@ export const matchApi = {
     apiRequest<Match>(`/matches/${id}/`),
 
   // Generate matches for a student
-  generateMatches: (studentId: string, matchType: 'professor' | 'project' = 'professor') =>
+  generateMatches: (studentId: string, matchType: 'professor' | 'project' = 'professor', useAI: boolean = true) =>
     apiRequest<Match[]>('/matches/generate_matches/', {
       method: 'POST',
       body: JSON.stringify({
         student_id: studentId,
         match_type: matchType,
+        use_ai: useAI,
       }),
     }),
 

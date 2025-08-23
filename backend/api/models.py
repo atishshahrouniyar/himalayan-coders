@@ -175,6 +175,12 @@ class Match(models.Model):
     availabilityFit = models.BooleanField(default=False)
     levelFit = models.BooleanField(default=False)
     
+    # AI-enhanced fields
+    aiScore = models.DecimalField(max_digits=5, decimal_places=2, blank=True, null=True)
+    aiExplanation = models.TextField(blank=True, null=True)
+    aiAnalysis = models.JSONField(default=dict)  # Store detailed AI analysis
+    detailedScores = models.JSONField(default=dict)  # Store individual score breakdowns
+    
     createdAt = models.DateTimeField(auto_now_add=True)
     
     class Meta:
