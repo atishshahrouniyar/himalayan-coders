@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'corsheaders',
+    'drf_spectacular',
     'api',
 ]
 
@@ -162,3 +163,41 @@ CORS_ALLOW_HEADERS = [
 
 # Gemini AI Configuration
 GEMINI_API_KEY = config('GEMINI_API_KEY', default='AIzaSyAPqByIADPP4oJXd1e3rcrirG8mCJVOGks')
+
+# Django REST Framework Configuration
+REST_FRAMEWORK = {
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 20,
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.AllowAny',
+    ],
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.SessionAuthentication',
+        'rest_framework.authentication.BasicAuthentication',
+    ],
+}
+
+# Spectacular Configuration
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'ResearchMatch API',
+    'DESCRIPTION': 'Student-Professor Research Matching Platform API',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+    'COMPONENT_SPLIT_REQUEST': True,
+    'SCHEMA_PATH_PREFIX': '/api/',
+    'CONTACT': {
+        'name': 'ResearchMatch Team',
+        'email': 'support@researchmatch.com',
+    },
+    'LICENSE': {
+        'name': 'MIT License',
+        'url': 'https://opensource.org/licenses/MIT',
+    },
+    'TAGS': [
+        {'name': 'students', 'description': 'Student profile management'},
+        {'name': 'professors', 'description': 'Professor profile management'},
+        {'name': 'projects', 'description': 'Research project management'},
+        {'name': 'matches', 'description': 'AI-powered matching system'},
+    ],
+}

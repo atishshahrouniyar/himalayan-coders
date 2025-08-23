@@ -4,6 +4,8 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.shortcuts import get_object_or_404
 from django.db.models import Q
+from drf_spectacular.utils import extend_schema, extend_schema_view, OpenApiParameter, OpenApiExample
+from drf_spectacular.types import OpenApiTypes
 from .models import StudentProfile, ProfessorProfile, ResearchProject, Match
 from .serializers import (
     StudentProfileSerializer, ProfessorProfileSerializer, ResearchProjectSerializer, MatchSerializer,
@@ -11,6 +13,33 @@ from .serializers import (
 )
 from .gemini_service import GeminiMatchingService
 
+@extend_schema_view(
+    list=extend_schema(
+        summary="List all students",
+        description="Retrieve a paginated list of all student profiles",
+        tags=['students']
+    ),
+    create=extend_schema(
+        summary="Create a new student",
+        description="Create a new student profile",
+        tags=['students']
+    ),
+    retrieve=extend_schema(
+        summary="Get student details",
+        description="Retrieve detailed information about a specific student",
+        tags=['students']
+    ),
+    update=extend_schema(
+        summary="Update student",
+        description="Update an existing student profile",
+        tags=['students']
+    ),
+    destroy=extend_schema(
+        summary="Delete student",
+        description="Delete a student profile",
+        tags=['students']
+    ),
+)
 class StudentProfileViewSet(viewsets.ModelViewSet):
     queryset = StudentProfile.objects.all()
     serializer_class = StudentProfileSerializer
@@ -21,6 +50,50 @@ class StudentProfileViewSet(viewsets.ModelViewSet):
             return StudentProfileListSerializer
         return StudentProfileSerializer
     
+    @extend_schema(
+        summary="Search students",
+        description="Search students by various criteria including name, university, department, degree level, and interests",
+        parameters=[
+            OpenApiParameter(
+                name='q',
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.QUERY,
+                description='General search query for name, university, or department'
+            ),
+            OpenApiParameter(
+                name='department',
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.QUERY,
+                description='Filter by department'
+            ),
+            OpenApiParameter(
+                name='degree_level',
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.QUERY,
+                description='Filter by degree level (BS, MS, PhD, Other)'
+            ),
+            OpenApiParameter(
+                name='interests',
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.QUERY,
+                description='Filter by research interests (can be multiple)',
+                many=True
+            ),
+        ],
+        examples=[
+            OpenApiExample(
+                'Search by name',
+                value={'q': 'John'},
+                description='Search for students with "John" in their name'
+            ),
+            OpenApiExample(
+                'Search by department',
+                value={'department': 'Computer Science'},
+                description='Find all students in Computer Science department'
+            ),
+        ],
+        tags=['students']
+    )
     @action(detail=False, methods=['get'])
     def search(self, request):
         """Search students by various criteria"""
@@ -55,6 +128,33 @@ class StudentProfileViewSet(viewsets.ModelViewSet):
             'total': queryset.count()
         })
 
+@extend_schema_view(
+    list=extend_schema(
+        summary="List all professors",
+        description="Retrieve a paginated list of all professor profiles",
+        tags=['professors']
+    ),
+    create=extend_schema(
+        summary="Create a new professor",
+        description="Create a new professor profile",
+        tags=['professors']
+    ),
+    retrieve=extend_schema(
+        summary="Get professor details",
+        description="Retrieve detailed information about a specific professor",
+        tags=['professors']
+    ),
+    update=extend_schema(
+        summary="Update professor",
+        description="Update an existing professor profile",
+        tags=['professors']
+    ),
+    destroy=extend_schema(
+        summary="Delete professor",
+        description="Delete a professor profile",
+        tags=['professors']
+    ),
+)
 class ProfessorProfileViewSet(viewsets.ModelViewSet):
     queryset = ProfessorProfile.objects.all()
     serializer_class = ProfessorProfileSerializer
@@ -65,6 +165,56 @@ class ProfessorProfileViewSet(viewsets.ModelViewSet):
             return ProfessorProfileListSerializer
         return ProfessorProfileSerializer
     
+    @extend_schema(
+        summary="Search professors",
+        description="Search professors by various criteria including name, title, institution, department, research areas, and student acceptance status",
+        parameters=[
+            OpenApiParameter(
+                name='q',
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.QUERY,
+                description='General search query for name, title, institution, or department'
+            ),
+            OpenApiParameter(
+                name='department',
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.QUERY,
+                description='Filter by department'
+            ),
+            OpenApiParameter(
+                name='institution',
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.QUERY,
+                description='Filter by institution'
+            ),
+            OpenApiParameter(
+                name='research_areas',
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.QUERY,
+                description='Filter by research areas (can be multiple)',
+                many=True
+            ),
+            OpenApiParameter(
+                name='accepting_students',
+                type=OpenApiTypes.BOOL,
+                location=OpenApiParameter.QUERY,
+                description='Filter by whether professor is accepting students'
+            ),
+        ],
+        examples=[
+            OpenApiExample(
+                'Search by name',
+                value={'q': 'Dr. Smith'},
+                description='Search for professors with "Dr. Smith" in their name'
+            ),
+            OpenApiExample(
+                'Search by research area',
+                value={'research_areas': 'Machine Learning'},
+                description='Find professors working in Machine Learning'
+            ),
+        ],
+        tags=['professors']
+    )
     @action(detail=False, methods=['get'])
     def search(self, request):
         """Search professors by various criteria"""
@@ -103,6 +253,33 @@ class ProfessorProfileViewSet(viewsets.ModelViewSet):
             'total': queryset.count()
         })
 
+@extend_schema_view(
+    list=extend_schema(
+        summary="List all research projects",
+        description="Retrieve a paginated list of all active research projects",
+        tags=['projects']
+    ),
+    create=extend_schema(
+        summary="Create a new research project",
+        description="Create a new research project",
+        tags=['projects']
+    ),
+    retrieve=extend_schema(
+        summary="Get project details",
+        description="Retrieve detailed information about a specific research project",
+        tags=['projects']
+    ),
+    update=extend_schema(
+        summary="Update project",
+        description="Update an existing research project",
+        tags=['projects']
+    ),
+    destroy=extend_schema(
+        summary="Delete project",
+        description="Delete a research project",
+        tags=['projects']
+    ),
+)
 class ResearchProjectViewSet(viewsets.ModelViewSet):
     queryset = ResearchProject.objects.filter(isActive=True)
     serializer_class = ResearchProjectSerializer
@@ -113,6 +290,62 @@ class ResearchProjectViewSet(viewsets.ModelViewSet):
             return ResearchProjectListSerializer
         return ResearchProjectSerializer
     
+    @extend_schema(
+        summary="Search research projects",
+        description="Search research projects by various criteria including title, summary, research areas, compensation, location, and hours",
+        parameters=[
+            OpenApiParameter(
+                name='q',
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.QUERY,
+                description='General search query for title, summary, or description'
+            ),
+            OpenApiParameter(
+                name='research_areas',
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.QUERY,
+                description='Filter by research areas (can be multiple)',
+                many=True
+            ),
+            OpenApiParameter(
+                name='compensation',
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.QUERY,
+                description='Filter by compensation type (Paid, Unpaid, Stipend)'
+            ),
+            OpenApiParameter(
+                name='location',
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.QUERY,
+                description='Filter by location'
+            ),
+            OpenApiParameter(
+                name='min_hours',
+                type=OpenApiTypes.INT,
+                location=OpenApiParameter.QUERY,
+                description='Minimum hours per week'
+            ),
+            OpenApiParameter(
+                name='max_hours',
+                type=OpenApiTypes.INT,
+                location=OpenApiParameter.QUERY,
+                description='Maximum hours per week'
+            ),
+        ],
+        examples=[
+            OpenApiExample(
+                'Search by title',
+                value={'q': 'Machine Learning'},
+                description='Search for projects with "Machine Learning" in the title'
+            ),
+            OpenApiExample(
+                'Search by compensation',
+                value={'compensation': 'Paid'},
+                description='Find all paid research projects'
+            ),
+        ],
+        tags=['projects']
+    )
     @action(detail=False, methods=['get'])
     def search(self, request):
         """Search research projects by various criteria"""
@@ -154,6 +387,33 @@ class ResearchProjectViewSet(viewsets.ModelViewSet):
             'total': queryset.count()
         })
 
+@extend_schema_view(
+    list=extend_schema(
+        summary="List all matches",
+        description="Retrieve a paginated list of all matches",
+        tags=['matches']
+    ),
+    create=extend_schema(
+        summary="Create a new match",
+        description="Create a new match record",
+        tags=['matches']
+    ),
+    retrieve=extend_schema(
+        summary="Get match details",
+        description="Retrieve detailed information about a specific match",
+        tags=['matches']
+    ),
+    update=extend_schema(
+        summary="Update match",
+        description="Update an existing match",
+        tags=['matches']
+    ),
+    destroy=extend_schema(
+        summary="Delete match",
+        description="Delete a match record",
+        tags=['matches']
+    ),
+)
 class MatchViewSet(viewsets.ModelViewSet):
     queryset = Match.objects.all()
     serializer_class = MatchSerializer
@@ -163,6 +423,54 @@ class MatchViewSet(viewsets.ModelViewSet):
         super().__init__(**kwargs)
         self.gemini_service = GeminiMatchingService()
     
+    @extend_schema(
+        summary="Generate AI-enhanced matches",
+        description="Generate AI-enhanced matches for a student with professors or research projects. Uses Google's Gemini AI to analyze compatibility and provide detailed scoring.",
+        request={
+            'application/json': {
+                'type': 'object',
+                'properties': {
+                    'student_id': {
+                        'type': 'string',
+                        'description': 'ID of the student to generate matches for'
+                    },
+                    'match_type': {
+                        'type': 'string',
+                        'enum': ['professor', 'project'],
+                        'description': 'Type of matches to generate',
+                        'default': 'professor'
+                    },
+                    'use_ai': {
+                        'type': 'boolean',
+                        'description': 'Whether to use AI-enhanced matching',
+                        'default': True
+                    }
+                },
+                'required': ['student_id']
+            }
+        },
+        examples=[
+            OpenApiExample(
+                'Match with professors',
+                value={
+                    'student_id': '1',
+                    'match_type': 'professor',
+                    'use_ai': True
+                },
+                description='Generate AI-enhanced matches with professors'
+            ),
+            OpenApiExample(
+                'Match with projects',
+                value={
+                    'student_id': '1',
+                    'match_type': 'project',
+                    'use_ai': False
+                },
+                description='Generate basic matches with research projects'
+            ),
+        ],
+        tags=['matches']
+    )
     @action(detail=False, methods=['post'])
     def generate_matches(self, request):
         """Generate AI-enhanced matches for a student"""
@@ -341,10 +649,44 @@ class MatchViewSet(viewsets.ModelViewSet):
         common_interests = set(student.primaryInterests) & set(project.researchAreas)
         return list(common_interests)
 
-# Additional utility views
+@extend_schema_view()
 class SearchViewSet(viewsets.ViewSet):
     permission_classes = [AllowAny]
     
+    @extend_schema(
+        summary="Global search",
+        description="Search across all entities (students, professors, projects) with a single query",
+        parameters=[
+            OpenApiParameter(
+                name='q',
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.QUERY,
+                description='Search query to find across all entities',
+                required=True
+            ),
+            OpenApiParameter(
+                name='type',
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.QUERY,
+                description='Type of entities to search in (students, professors, projects, all)',
+                enum=['students', 'professors', 'projects', 'all'],
+                default='all'
+            ),
+        ],
+        examples=[
+            OpenApiExample(
+                'Search all entities',
+                value={'q': 'Machine Learning'},
+                description='Search for "Machine Learning" across all entities'
+            ),
+            OpenApiExample(
+                'Search only students',
+                value={'q': 'John', 'type': 'students'},
+                description='Search for students with "John" in their name'
+            ),
+        ],
+        tags=['search']
+    )
     @action(detail=False, methods=['get'])
     def global_search(self, request):
         """Global search across all entities"""
