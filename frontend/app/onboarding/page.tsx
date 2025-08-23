@@ -43,7 +43,7 @@ const ONBOARDING_STEPS: OnboardingStep[] = [
   {
     id: 'skills',
     title: 'Skills & Experience',
-    description: 'What skills and experience do you bring?',
+    description: 'What skills and experience do you bring? This helps us find better matches.',
     isCompleted: false,
     isRequired: true
   },
@@ -155,12 +155,6 @@ export default function OnboardingPage() {
       case 'basics':
         return (
           <div className="space-y-6">
-            <div className="text-center mb-8">
-              <h2 className="text-2xl font-bold mb-2">Basic Information</h2>
-              <p className="text-gray-600 dark:text-gray-400">
-                Let's start with the basics about you and your academic background.
-              </p>
-            </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
@@ -194,19 +188,14 @@ export default function OnboardingPage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-2">University</label>
-                <select 
+                <label className="block text-sm font-medium mb-2">Undergrad University</label>
+                <input 
+                  type="text" 
                   className="input-field"
+                  placeholder="Enter your undergraduate university"
                   value={profileData.university || ''}
                   onChange={(e) => setProfileData({...profileData, university: e.target.value})}
-                >
-                  <option value="">Select your university</option>
-                  <option value="MIT">MIT</option>
-                  <option value="Stanford">Stanford</option>
-                  <option value="Harvard">Harvard</option>
-                  <option value="UC Berkeley">UC Berkeley</option>
-                  <option value="Other">Other</option>
-                </select>
+                />
               </div>
             </div>
           </div>
@@ -215,12 +204,6 @@ export default function OnboardingPage() {
       case 'interests':
         return (
           <div className="space-y-6">
-            <div className="text-center mb-8">
-              <h2 className="text-2xl font-bold mb-2">Research Interests</h2>
-              <p className="text-gray-600 dark:text-gray-400">
-                What areas of research are you most interested in? Select at least 3 areas.
-              </p>
-            </div>
             
             <div>
               <label className="block text-sm font-medium mb-4">Primary Research Areas</label>
@@ -251,12 +234,6 @@ export default function OnboardingPage() {
       case 'skills':
         return (
           <div className="space-y-6">
-            <div className="text-center mb-8">
-              <h2 className="text-2xl font-bold mb-2">Skills & Experience</h2>
-              <p className="text-gray-600 dark:text-gray-400">
-                What skills and experience do you bring? This helps us find better matches.
-              </p>
-            </div>
             
             <div>
               <label className="block text-sm font-medium mb-4">Programming Languages</label>
@@ -287,30 +264,10 @@ export default function OnboardingPage() {
       case 'availability':
         return (
           <div className="space-y-6">
-            <div className="text-center mb-8">
-              <h2 className="text-2xl font-bold mb-2">Availability & Preferences</h2>
-              <p className="text-gray-600 dark:text-gray-400">
-                When are you available and what are your preferences for research opportunities?
-              </p>
-            </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="max-w-md mx-auto">
               <div>
-                <label className="block text-sm font-medium mb-2">Hours per Week</label>
-                <select 
-                  className="input-field"
-                  value={profileData.hoursPerWeek || ''}
-                  onChange={(e) => setProfileData({...profileData, hoursPerWeek: e.target.value})}
-                >
-                  <option value="">Select hours</option>
-                  <option value="5-10">5-10 hours</option>
-                  <option value="10-20">10-20 hours</option>
-                  <option value="20-30">20-30 hours</option>
-                  <option value="30+">30+ hours</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-2">Start Date</label>
+                <label className="block text-sm font-medium mb-2">Your Approximate Graduate Start Preference</label>
                 <input 
                   type="date" 
                   className="input-field"
@@ -325,12 +282,6 @@ export default function OnboardingPage() {
       case 'documents':
         return (
           <div className="space-y-6">
-            <div className="text-center mb-8">
-              <h2 className="text-2xl font-bold mb-2">Documents & Links</h2>
-              <p className="text-gray-600 dark:text-gray-400">
-                Upload your CV and add relevant links to showcase your work.
-              </p>
-            </div>
             
             <div className="space-y-6">
               <div>
@@ -359,12 +310,6 @@ export default function OnboardingPage() {
       case 'review':
         return (
           <div className="space-y-6">
-            <div className="text-center mb-8">
-              <h2 className="text-2xl font-bold mb-2">Review Your Profile</h2>
-              <p className="text-gray-600 dark:text-gray-400">
-                Take a moment to review your profile before completing the setup.
-              </p>
-            </div>
             
             <Card>
               <CardHeader>

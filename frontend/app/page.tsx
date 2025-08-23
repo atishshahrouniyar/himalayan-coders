@@ -34,26 +34,31 @@ export default function HomePage() {
               Connect students with professors whose research areas align with their interests, 
               and help professors discover students that match their active projects.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" className="bg-research-600 hover:bg-research-700 text-white px-8 py-3">
-                <Search className="mr-2 h-5 w-5" />
-                Find Opportunities
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section - Moved Up */}
+      <section className="py-20 bg-research-600">
+        <div className="container mx-auto px-4 text-center">
+          <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
+            Ready to Find Your Research Match?
+          </h2>
+          <p className="text-xl text-research-100 mb-8 max-w-2xl mx-auto">
+            Join thousands of students and professors who have already found their perfect research partnerships.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link href="/onboarding">
+              <Button size="lg" variant="secondary" className="px-8 py-3">
+                Get Started Now
+                <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
-              <Button variant="outline" size="lg" className="px-8 py-3">
-                <Users className="mr-2 h-5 w-5" />
-                Join as Professor
+            </Link>
+            <Link href="/search">
+              <Button size="lg" variant="outline" className="px-8 py-3 border-white text-white hover:bg-white hover:text-research-600">
+                Browse Opportunities
               </Button>
-              <Link href="/api-test">
-                <Button variant="outline" size="lg" className="px-8 py-3">
-                  Test API Integration
-                </Button>
-              </Link>
-              <Link href="/ai-match-test">
-                <Button variant="outline" size="lg" className="px-8 py-3 bg-purple-600 text-white hover:bg-purple-700">
-                  AI Matching Test
-                </Button>
-              </Link>
-            </div>
+            </Link>
           </div>
         </div>
       </section>
@@ -212,31 +217,6 @@ export default function HomePage() {
                 Message potential matches and apply to research opportunities
               </p>
             </div>
-          </div>
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="py-20 bg-research-600">
-        <div className="container mx-auto px-4 text-center">
-          <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
-            Ready to Find Your Research Match?
-          </h2>
-          <p className="text-xl text-research-100 mb-8 max-w-2xl mx-auto">
-            Join thousands of students and professors who have already found their perfect research partnerships.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/onboarding">
-              <Button size="lg" variant="secondary" className="px-8 py-3">
-                Get Started Now
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
-            </Link>
-            <Link href="/search">
-              <Button size="lg" variant="outline" className="px-8 py-3 border-white text-white hover:bg-white hover:text-research-600">
-                Browse Opportunities
-              </Button>
-            </Link>
           </div>
         </div>
       </section>
