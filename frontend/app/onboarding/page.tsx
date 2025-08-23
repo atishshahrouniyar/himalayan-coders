@@ -19,6 +19,7 @@ import {
 } from 'lucide-react'
 import { OnboardingStep, OnboardingProgress } from '@/types'
 import { studentApi, professorApi } from '@/lib/api'
+import { userSession } from '@/lib/utils'
 
 const ONBOARDING_STEPS: OnboardingStep[] = [
   {
@@ -173,10 +174,15 @@ export default function OnboardingPage() {
       }
 
       // Submit to appropriate API based on user role
+      let createdProfile
       if (userRole === 'student') {
-        await studentApi.create(profilePayload)
+        createdProfile = await studentApi.create(profilePayload)
+        // Save user session data
+        userSession.saveUserSession(createdProfile.id, 'student')
       } else {
-        await professorApi.create(profilePayload)
+        createdProfile = await professorApi.create(profilePayload)
+        // Save user session data
+        userSession.saveUserSession(createdProfile.id, 'professor')
       }
 
       // Redirect to dashboard on success

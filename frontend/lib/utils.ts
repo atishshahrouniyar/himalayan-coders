@@ -116,3 +116,45 @@ export function getInitials(name: string): string {
 export function sleep(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms))
 }
+
+// User session management utilities
+export const userSession = {
+  // Get current user ID and role
+  getCurrentUser: () => {
+    const studentId = localStorage.getItem('studentId')
+    const professorId = localStorage.getItem('professorId')
+    const userRole = localStorage.getItem('userRole')
+    
+    if (studentId && userRole === 'student') {
+      return { id: studentId, role: 'student' }
+    }
+    if (professorId && userRole === 'professor') {
+      return { id: professorId, role: 'professor' }
+    }
+    return null
+  },
+
+  // Save user session data
+  saveUserSession: (id: string, role: 'student' | 'professor') => {
+    if (role === 'student') {
+      localStorage.setItem('studentId', id)
+      localStorage.removeItem('professorId')
+    } else {
+      localStorage.setItem('professorId', id)
+      localStorage.removeItem('studentId')
+    }
+    localStorage.setItem('userRole', role)
+  },
+
+  // Clear user session
+  clearSession: () => {
+    localStorage.removeItem('studentId')
+    localStorage.removeItem('professorId')
+    localStorage.removeItem('userRole')
+  },
+
+  // Check if user is logged in
+  isLoggedIn: () => {
+    return userSession.getCurrentUser() !== null
+  }
+}

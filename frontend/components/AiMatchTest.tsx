@@ -1,7 +1,8 @@
 'use client'
 
 import React, { useState } from 'react'
-import { useStudents, useGenerateMatches } from '@/lib/hooks'
+import { useGenerateMatches } from '@/lib/hooks'
+import { userSession } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -11,56 +12,42 @@ import { Switch } from '@/components/ui/switch'
 import { Loader2, Brain, Sparkles, Target, Users } from 'lucide-react'
 
 export default function AiMatchTest() {
-  const [selectedStudent, setSelectedStudent] = useState<string>('')
-  const [matchType, setMatchType] = useState<'professor' | 'project'>('professor')
   const [useAI, setUseAI] = useState(true)
   const [matches, setMatches] = useState<any[]>([])
   const [isGenerating, setIsGenerating] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   
   // API hooks
-  const { data: studentsData, isLoading: studentsLoading, error: studentsError } = useStudents()
   const generateMatchesMutation = useGenerateMatches()
   
-  // Error handling
-  const studentsErrorInfo = studentsError
-  
-  // Debug logging
-  console.log('Students data:', studentsData)
-  console.log('Students loading:', studentsLoading)
-  console.log('Students error:', studentsError)
-  
   const handleGenerateMatches = async () => {
-    if (!selectedStudent) {
-      alert('Please select a student first')
+    // Get current user from session
+    const currentUser = userSession.getCurrentUser()
+    
+    if (!currentUser || currentUser.role !== 'student') {
+      setError('No student profile found. Please complete your profile first.')
       return
     }
     
     setIsGenerating(true)
+    setError(null)
+    
     try {
       const result = await generateMatchesMutation.mutateAsync({
-        studentId: selectedStudent,
+        studentId: currentUser.id,
         useAi: useAI
       })
       
       setMatches(result)
     } catch (error) {
       console.error('Error generating matches:', error)
-      alert('Error generating matches')
+      setError('Error generating matches. Please try again.')
     } finally {
       setIsGenerating(false)
     }
   }
   
-  const getStudentName = (studentId: string) => {
-    // Try both data structures
-    let student = null
-    if (studentsData && Array.isArray(studentsData)) {
-      student = studentsData.find(s => s.id === studentId)
-    } else if (studentsData && typeof studentsData === 'object' && 'results' in studentsData) {
-      student = (studentsData as any).results.find((s: any) => s.id === studentId)
-    }
-    return student ? `${student.firstName} ${student.lastName}` : 'Unknown Student'
-  }
+
   
   const renderMatchCard = (match: any, index: number) => (
     <Card key={match.id} className="mb-4">
@@ -205,59 +192,16 @@ export default function AiMatchTest() {
         </CardHeader>
         <CardContent>
           <div className="space-y-6">
-            {/* Configuration Section */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="student">Select Student</Label>
-                <Select value={selectedStudent} onValueChange={setSelectedStudent}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Choose a student" />
-                  </SelectTrigger>
-                                     <SelectContent>
-                     {(() => {
-                       const students = studentsData && Array.isArray(studentsData) 
-                         ? studentsData 
-                         : (studentsData && typeof studentsData === 'object' && 'results' in studentsData 
-                           ? (studentsData as any).results 
-                           : [])
-                                               return students.length > 0 ? (
-                          students.map((student: any) => (
-                           <SelectItem key={student.id} value={student.id}>
-                             {student.firstName} {student.lastName} - {student.university}
-                           </SelectItem>
-                         ))
-                       ) : (
-                         <SelectItem value="no-students" disabled>
-                           {studentsLoading ? 'Loading students...' : 'No students available'}
-                         </SelectItem>
-                       )
-                     })()}
-                   </SelectContent>
-                </Select>
-              </div>
-              
-              <div>
-                <Label htmlFor="matchType">Match Type</Label>
-                <Select value={matchType} onValueChange={(value: 'professor' | 'project') => setMatchType(value)}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="professor">
-                      <div className="flex items-center gap-2">
-                        <Users className="h-4 w-4" />
-                        Professors
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="project">
-                      <div className="flex items-center gap-2">
-                        <Target className="h-4 w-4" />
-                        Projects
-                      </div>
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+            {/* Current User Info */}
+            <div className="p-4 bg-blue-50 rounded-lg">
+              <p className="text-sm text-blue-700">
+                <strong>Current User:</strong> {userSession.getCurrentUser()?.role === 'student' ? 'Student' : 'Professor'}
+              </p>
+              {userSession.getCurrentUser()?.role !== 'student' && (
+                <p className="text-sm text-red-600 mt-1">
+                  Only students can generate matches. Please complete your student profile first.
+                </p>
+              )}
             </div>
             
             {/* AI Toggle */}
@@ -276,7 +220,7 @@ export default function AiMatchTest() {
             {/* Generate Button */}
             <Button 
               onClick={handleGenerateMatches}
-              disabled={!selectedStudent || isGenerating}
+              disabled={userSession.getCurrentUser()?.role !== 'student' || isGenerating}
               className="w-full"
             >
               {isGenerating ? (
@@ -293,10 +237,10 @@ export default function AiMatchTest() {
             </Button>
             
             {/* Error Display */}
-            {studentsError && (
+            {error && (
               <Card className="border-red-200 bg-red-50">
                 <CardContent className="pt-6">
-                  <p className="text-red-600">Error: {studentsErrorInfo?.message || 'Unknown error'}</p>
+                  <p className="text-red-600">Error: {error}</p>
                 </CardContent>
               </Card>
             )}

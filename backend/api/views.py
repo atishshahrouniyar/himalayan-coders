@@ -224,8 +224,37 @@ class ProfessorProfileViewSet(viewsets.ModelViewSet):
 
 @extend_schema_view(
     list=extend_schema(
-        summary="List all matches",
-        description="Retrieve a paginated list of all student-professor matches",
+        summary="List matches",
+        description="Retrieve a paginated list of student-professor matches with optional filtering",
+        parameters=[
+            OpenApiParameter(
+                name='student_id',
+                type=OpenApiTypes.STR,
+                description='Filter matches by student ID'
+            ),
+            OpenApiParameter(
+                name='professor_id',
+                type=OpenApiTypes.STR,
+                description='Filter matches by professor ID'
+            ),
+            OpenApiParameter(
+                name='min_score',
+                type=OpenApiTypes.FLOAT,
+                description='Filter matches by minimum score'
+            ),
+        ],
+        examples=[
+            OpenApiExample(
+                'Get matches for a student',
+                description='Get all matches for a specific student',
+                value={'student_id': 'uuid-here'}
+            ),
+            OpenApiExample(
+                'Get high-scoring matches',
+                description='Get matches with score >= 80',
+                value={'min_score': 80}
+            ),
+        ],
         tags=['matches']
     ),
     create=extend_schema(
@@ -253,6 +282,31 @@ class MatchViewSet(viewsets.ModelViewSet):
     queryset = Match.objects.all()
     serializer_class = MatchSerializer
     permission_classes = [AllowAny]
+
+    def get_queryset(self):
+        """Filter matches based on query parameters"""
+        queryset = Match.objects.all()
+        
+        # Filter by student ID
+        student_id = self.request.query_params.get('student_id')
+        if student_id:
+            queryset = queryset.filter(student_id=student_id)
+        
+        # Filter by professor ID
+        professor_id = self.request.query_params.get('professor_id')
+        if professor_id:
+            queryset = queryset.filter(professor_id=professor_id)
+        
+        # Filter by minimum score
+        min_score = self.request.query_params.get('min_score')
+        if min_score:
+            try:
+                min_score_float = float(min_score)
+                queryset = queryset.filter(score__gte=min_score_float)
+            except ValueError:
+                pass  # Ignore invalid min_score values
+        
+        return queryset
 
     @extend_schema(
         summary="Generate AI matches",

@@ -15,6 +15,7 @@ import {
 } from 'lucide-react'
 import { matchApi } from '@/lib/api'
 import { Match } from '@/types'
+import { userSession } from '@/lib/utils'
 
 export default function DashboardPage() {
   const [matches, setMatches] = useState<Match[]>([])
@@ -27,9 +28,16 @@ export default function DashboardPage() {
         setLoading(true)
         setError(null)
         
-        // For demo purposes, we'll use a hardcoded student ID
-        // In a real app, this would come from authentication context
-        const studentId = '1'
+        // Get current user from session
+        const currentUser = userSession.getCurrentUser()
+        
+        if (!currentUser || currentUser.role !== 'student') {
+          setError('No student profile found. Please complete your profile first.')
+          setLoading(false)
+          return
+        }
+        
+        const studentId = currentUser.id
         
         // Fetch matches for the student
         const matchesResponse = await matchApi.getAll({ studentId })
