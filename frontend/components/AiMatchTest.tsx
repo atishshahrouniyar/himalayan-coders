@@ -57,7 +57,13 @@ export default function AiMatchTest() {
   }
   
   const getStudentName = (studentId: string) => {
-    const student = studentsData?.data?.find(s => s.id === studentId)
+    // Try both data structures
+    let student = null
+    if (studentsData && Array.isArray(studentsData)) {
+      student = studentsData.find(s => s.id === studentId)
+    } else if (studentsData?.data && Array.isArray(studentsData.data)) {
+      student = studentsData.data.find(s => s.id === studentId)
+    }
     return student ? `${student.firstName} ${student.lastName}` : 'Unknown Student'
   }
   
@@ -72,7 +78,7 @@ export default function AiMatchTest() {
               {match.aiScore && (
                 <Badge variant="secondary" className="ml-2">
                   <Brain className="h-3 w-3 mr-1" />
-                  AI Score: {match.aiScore.toFixed(1)}
+                                     AI Score: {typeof match.aiScore === 'number' ? match.aiScore.toFixed(1) : match.aiScore}
                 </Badge>
               )}
             </CardTitle>
@@ -81,9 +87,9 @@ export default function AiMatchTest() {
             </CardDescription>
           </div>
           <div className="text-right">
-            <div className="text-2xl font-bold text-green-600">
-              {match.score.toFixed(1)}
-            </div>
+                         <div className="text-2xl font-bold text-green-600">
+               {typeof match.score === 'number' ? match.score.toFixed(1) : match.score}
+             </div>
             <div className="text-sm text-gray-500">Match Score</div>
           </div>
         </div>
@@ -97,16 +103,20 @@ export default function AiMatchTest() {
               <p className="text-sm text-gray-500">{match.professor.department}</p>
             </div>
             
-            <div>
-              <h5 className="font-medium mb-2">Research Areas:</h5>
-              <div className="flex flex-wrap gap-1">
-                {match.professor.researchAreas.map((area: string, idx: number) => (
-                  <Badge key={idx} variant="outline" className="text-xs">
-                    {area}
-                  </Badge>
-                ))}
-              </div>
-            </div>
+                         <div>
+               <h5 className="font-medium mb-2">Research Areas:</h5>
+               <div className="flex flex-wrap gap-1">
+                 {Array.isArray(match.professor.researchAreas) ? match.professor.researchAreas.map((area: string, idx: number) => (
+                   <Badge key={idx} variant="outline" className="text-xs">
+                     {area}
+                   </Badge>
+                 )) : (
+                   <Badge variant="outline" className="text-xs">
+                     {String(match.professor.researchAreas || 'No research areas specified')}
+                   </Badge>
+                 )}
+               </div>
+             </div>
           </div>
         )}
         
@@ -121,16 +131,20 @@ export default function AiMatchTest() {
               <p className="text-sm text-gray-700 mb-2">{match.project.summary}</p>
             </div>
             
-            <div>
-              <h5 className="font-medium mb-2">Research Areas:</h5>
-              <div className="flex flex-wrap gap-1">
-                {match.project.researchAreas.map((area: string, idx: number) => (
-                  <Badge key={idx} variant="outline" className="text-xs">
-                    {area}
-                  </Badge>
-                ))}
-              </div>
-            </div>
+                         <div>
+               <h5 className="font-medium mb-2">Research Areas:</h5>
+               <div className="flex flex-wrap gap-1">
+                 {Array.isArray(match.project.researchAreas) ? match.project.researchAreas.map((area: string, idx: number) => (
+                   <Badge key={idx} variant="outline" className="text-xs">
+                     {area}
+                   </Badge>
+                 )) : (
+                   <Badge variant="outline" className="text-xs">
+                     {String(match.project.researchAreas || 'No research areas specified')}
+                   </Badge>
+                 )}
+               </div>
+             </div>
             
             <div className="flex gap-2 text-sm">
               <Badge variant="secondary">{match.project.compensation}</Badge>
@@ -140,16 +154,20 @@ export default function AiMatchTest() {
           </div>
         )}
         
-        <div className="mt-4">
-          <h5 className="font-medium mb-2">Highlights:</h5>
-          <div className="flex flex-wrap gap-1">
-            {match.highlights.map((highlight: string, idx: number) => (
-              <Badge key={idx} variant="secondary" className="text-xs">
-                {highlight}
-              </Badge>
-            ))}
-          </div>
-        </div>
+                 <div className="mt-4">
+           <h5 className="font-medium mb-2">Highlights:</h5>
+           <div className="flex flex-wrap gap-1">
+             {Array.isArray(match.highlights) ? match.highlights.map((highlight: string, idx: number) => (
+               <Badge key={idx} variant="secondary" className="text-xs">
+                 {highlight}
+               </Badge>
+             )) : (
+               <Badge variant="secondary" className="text-xs">
+                 {String(match.highlights || 'No highlights available')}
+               </Badge>
+             )}
+           </div>
+         </div>
         
         {match.aiExplanation && (
           <div className="mt-4 p-3 bg-blue-50 rounded-lg">
@@ -165,12 +183,12 @@ export default function AiMatchTest() {
           <div className="mt-4">
             <h5 className="font-medium mb-2">Detailed Scores:</h5>
             <div className="space-y-2">
-              {Object.entries(match.detailedScores).map(([key, value]) => (
-                <div key={key} className="flex justify-between items-center">
-                  <span className="text-sm capitalize">{key.replace(/_/g, ' ')}:</span>
-                  <span className="text-sm font-medium">{value}/100</span>
-                </div>
-              ))}
+                             {Object.entries(match.detailedScores).map(([key, value]) => (
+                 <div key={key} className="flex justify-between items-center">
+                   <span className="text-sm capitalize">{key.replace(/_/g, ' ')}:</span>
+                   <span className="text-sm font-medium">{String(value)}/100</span>
+                 </div>
+               ))}
             </div>
           </div>
         )}
@@ -200,19 +218,25 @@ export default function AiMatchTest() {
                   <SelectTrigger>
                     <SelectValue placeholder="Choose a student" />
                   </SelectTrigger>
-                  <SelectContent>
-                    {studentsData?.data ? (
-                      studentsData.data.map((student) => (
-                        <SelectItem key={student.id} value={student.id}>
-                          {student.firstName} {student.lastName} - {student.university}
-                        </SelectItem>
-                      ))
-                    ) : (
-                      <SelectItem value="" disabled>
-                        No students available
-                      </SelectItem>
-                    )}
-                  </SelectContent>
+                                     <SelectContent>
+                     {studentsData && Array.isArray(studentsData) && studentsData.length > 0 ? (
+                       studentsData.map((student) => (
+                         <SelectItem key={student.id} value={student.id}>
+                           {student.firstName} {student.lastName} - {student.university}
+                         </SelectItem>
+                       ))
+                     ) : studentsData?.data && Array.isArray(studentsData.data) && studentsData.data.length > 0 ? (
+                       studentsData.data.map((student) => (
+                         <SelectItem key={student.id} value={student.id}>
+                           {student.firstName} {student.lastName} - {student.university}
+                         </SelectItem>
+                       ))
+                     ) : (
+                       <SelectItem value="no-students" disabled>
+                         {studentsLoading ? 'Loading students...' : 'No students available'}
+                       </SelectItem>
+                     )}
+                   </SelectContent>
                 </Select>
               </div>
               
@@ -289,7 +313,7 @@ export default function AiMatchTest() {
                 <p className="text-sm">Has Data: {studentsData ? 'Yes' : 'No'}</p>
                 <p className="text-sm">Data Type: {typeof studentsData}</p>
                 <p className="text-sm">Data Keys: {studentsData ? Object.keys(studentsData).join(', ') : 'None'}</p>
-                <p className="text-sm">Students Count: {studentsData?.data?.length || 0}</p>
+                                 <p className="text-sm">Students Count: {Array.isArray(studentsData) ? studentsData.length : studentsData?.data?.length || 0}</p>
                 <pre className="text-xs mt-2 bg-gray-100 p-2 rounded overflow-auto max-h-32">
                   {JSON.stringify(studentsData, null, 2)}
                 </pre>
