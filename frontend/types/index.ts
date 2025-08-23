@@ -68,101 +68,73 @@ export interface StudentProfile {
 }
 
 export interface ProfessorProfile {
-  id: string;
-  userId: string;
-  name: string;
-  title: string;
-  department: string;
-  institution: string;
-  researchAreas: string[];
-  researchDescription?: string;
-  methods: string[];
-  publications: Publication[];
-  labWebsite?: string;
-  googleScholarUrl?: string;
-  orcidUrl?: string;
-  acceptingStudents: boolean;
-  preferredDegreeLevels: ('BS' | 'MS' | 'PhD')[];
-  prerequisites?: string;
-  contactPreferences: ('in-app' | 'email')[];
-  
-  // Metadata
-  profileCompleteness: number;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-export interface ResearchProject {
-  id: string;
-  professorId: string;
-  title: string;
-  summary: string;
-  description: string;
-  researchAreas: string[];
-  techniques: string[];
-  datasets?: string[];
-  tools?: string[];
-  desiredSkills: Skill[];
-  hoursPerWeek: number;
-  startWindow: string;
-  endWindow?: string;
-  compensation: 'Stipend' | 'Credit' | 'Volunteer';
-  location: 'On-site' | 'Remote' | 'Hybrid';
-  isActive: boolean;
-  
-  createdAt: Date;
-  updatedAt: Date;
+  id: string
+  name: string
+  title: string
+  department: string
+  institution: string
+  email: string
+  phone?: string
+  bio: string
+  researchAreas: string[]
+  methods: string[]
+  preferredDegreeLevels: ('BS' | 'MS' | 'PhD')[]
+  acceptingStudents: boolean
+  profileCompleteness: number
+  contactPreferences: 'in-app' | 'email'
+  timezone: string
+  workAuthorization: string
+  createdAt: string
+  updatedAt: string
 }
 
 export interface Skill {
-  name: string;
-  level: 1 | 2 | 3 | 4 | 5;
+  name: string
+  level: 1 | 2 | 3 | 4 | 5
 }
 
 export interface Publication {
-  title: string;
-  venue?: string;
-  year?: number;
-  url?: string;
-  doi?: string;
+  title: string
+  venue?: string
+  year?: number
+  url?: string
+  doi?: string
 }
 
 export interface Project {
-  title: string;
-  description: string;
-  role: string;
-  link?: string;
+  title: string
+  description: string
+  role: string
+  link?: string
 }
 
 export interface WorkRole {
-  title: string;
-  organization: string;
-  startDate: string;
-  endDate?: string;
-  description?: string;
+  title: string
+  organization: string
+  startDate: string
+  endDate?: string
+  description?: string
 }
 
 export interface Match {
-  id: string;
-  studentId: string;
-  professorId?: string;
-  projectId?: string;
-  matchType: 'professor' | 'project';
-  score: number;
-  highlights: string[];
-  studentInterests: string[];
-  professorInterests: string[];
-  skillFit: SkillFit[];
-  availabilityFit: boolean;
-  levelFit: boolean;
-  
-  // AI-enhanced fields
-  aiScore?: number;
-  aiExplanation?: string;
-  aiAnalysis?: Record<string, any>;
-  detailedScores?: Record<string, any>;
-  
-  createdAt: Date;
+  id: string
+  student: StudentProfile
+  professor: ProfessorProfile
+  score: number
+  aiScore: number
+  aiExplanation: string
+  aiAnalysis: string
+  highlights: string[]
+  studentInterests: string[]
+  professorInterests: string[]
+  detailedScores: {
+    researchAreaMatch: number
+    skillMatch: number
+    availabilityMatch: number
+    communicationMatch: number
+  }
+  createdAt: string
+  updatedAt: string
 }
 
 export interface SkillFit {

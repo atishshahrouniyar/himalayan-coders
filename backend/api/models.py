@@ -117,56 +117,10 @@ class ProfessorProfile(models.Model):
     def __str__(self):
         return f"Dr. {self.name} - {self.institution}"
 
-class ResearchProject(models.Model):
-    COMPENSATION_CHOICES = [
-        ('Stipend', 'Stipend'),
-        ('Credit', 'Credit'),
-        ('Volunteer', 'Volunteer'),
-    ]
-    
-    LOCATION_CHOICES = [
-        ('On-site', 'On-site'),
-        ('Remote', 'Remote'),
-        ('Hybrid', 'Hybrid'),
-    ]
-    
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    professor = models.ForeignKey(ProfessorProfile, on_delete=models.CASCADE, related_name='projects')
-    title = models.CharField(max_length=200)
-    summary = models.TextField()
-    description = models.TextField()
-    researchAreas = ArrayField(models.CharField(max_length=100), default=list)
-    techniques = ArrayField(models.CharField(max_length=100), default=list)
-    datasets = ArrayField(models.CharField(max_length=200), default=list, blank=True)
-    tools = ArrayField(models.CharField(max_length=100), default=list, blank=True)
-    desiredSkills = models.JSONField(default=list)  # Will store Skill objects
-    hoursPerWeek = models.IntegerField()
-    startWindow = models.CharField(max_length=100)
-    endWindow = models.CharField(max_length=100, blank=True, null=True)
-    compensation = models.CharField(max_length=20, choices=COMPENSATION_CHOICES)
-    location = models.CharField(max_length=10, choices=LOCATION_CHOICES)
-    isActive = models.BooleanField(default=True)
-    
-    createdAt = models.DateTimeField(auto_now_add=True)
-    updatedAt = models.DateTimeField(auto_now=True)
-    
-    class Meta:
-        db_table = 'research_projects'
-    
-    def __str__(self):
-        return f"{self.title} - {self.professor.name}"
-
 class Match(models.Model):
-    MATCH_TYPE_CHOICES = [
-        ('professor', 'Professor'),
-        ('project', 'Project'),
-    ]
-    
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     student = models.ForeignKey(StudentProfile, on_delete=models.CASCADE, related_name='matches')
-    professor = models.ForeignKey(ProfessorProfile, on_delete=models.CASCADE, related_name='matches', blank=True, null=True)
-    project = models.ForeignKey(ResearchProject, on_delete=models.CASCADE, related_name='matches', blank=True, null=True)
-    matchType = models.CharField(max_length=20, choices=MATCH_TYPE_CHOICES)
+    professor = models.ForeignKey(ProfessorProfile, on_delete=models.CASCADE, related_name='matches')
     score = models.DecimalField(max_digits=5, decimal_places=2)
     highlights = ArrayField(models.CharField(max_length=200), default=list)
     studentInterests = ArrayField(models.CharField(max_length=100), default=list)
@@ -187,4 +141,4 @@ class Match(models.Model):
         db_table = 'matches'
     
     def __str__(self):
-        return f"Match: {self.student.firstName} {self.student.lastName} - {self.matchType}"
+        return f"Match: {self.student.firstName} {self.student.lastName} - {self.professor.name}"

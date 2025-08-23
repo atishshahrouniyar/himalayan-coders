@@ -194,10 +194,9 @@ SPECTACULAR_SETTINGS = {
         'name': 'MIT License',
         'url': 'https://opensource.org/licenses/MIT',
     },
-    'TAGS': [
-        {'name': 'students', 'description': 'Student profile management'},
-        {'name': 'professors', 'description': 'Professor profile management'},
-        {'name': 'projects', 'description': 'Research project management'},
-        {'name': 'matches', 'description': 'AI-powered matching system'},
-    ],
+               'TAGS': [
+               {'name': 'students', 'description': 'Student profile management'},
+               {'name': 'professors', 'description': 'Professor profile management'},
+               {'name': 'matches', 'description': 'AI-powered matching system'},
+           ],
 }

@@ -1,6 +1,6 @@
 from django.core.management.base import BaseCommand
 from django.contrib.auth.models import User
-from api.models import StudentProfile, ProfessorProfile, ResearchProject
+from api.models import StudentProfile, ProfessorProfile
 import uuid
 
 class Command(BaseCommand):
@@ -100,22 +100,16 @@ class Command(BaseCommand):
                 'year': 2024,
                 'semester': 1,
                 'primaryInterests': ['Robotics', 'Control Systems', 'Signal Processing'],
-                'methods': ['Control Theory', 'Optimization'],
+                'methods': ['Control Theory', 'Optimization', 'System Design'],
                 'domains': ['Electrical Engineering', 'Robotics'],
                 'programmingSkills': [
                     {'name': 'MATLAB', 'level': 5},
-                    {'name': 'Python', 'level': 4},
-                    {'name': 'C++', 'level': 3}
+                    {'name': 'Python', 'level': 3},
+                    {'name': 'C++', 'level': 4}
                 ],
-                'labSkills': ['Circuit Design', 'System Modeling'],
-                'statisticalSkills': ['Time Series Analysis', 'Signal Processing'],
-                'publications': [
-                    {
-                        'title': 'Robotic Control Systems: A Survey',
-                        'venue': 'IEEE Robotics and Automation',
-                        'year': 2023
-                    }
-                ],
+                'labSkills': ['Circuit Design', 'System Integration'],
+                'statisticalSkills': ['Signal Processing', 'Time Series Analysis'],
+                'publications': [],
                 'projects': [
                     {
                         'title': 'Autonomous Robot Navigation',
@@ -143,13 +137,13 @@ class Command(BaseCommand):
                 'title': 'Associate Professor',
                 'department': 'Computer Science',
                 'institution': 'Stanford University',
-                'researchAreas': ['Machine Learning', 'Computer Vision', 'Natural Language Processing'],
-                'researchDescription': 'My research focuses on developing novel machine learning algorithms for computer vision and natural language processing applications.',
-                'methods': ['Deep Learning', 'Computer Vision', 'NLP'],
+                'researchAreas': ['Computer Vision', 'Machine Learning', 'Natural Language Processing'],
+                'researchDescription': 'My research focuses on developing computer vision and machine learning algorithms for real-world applications.',
+                'methods': ['Deep Learning', 'Computer Vision', 'Natural Language Processing'],
                 'publications': [
                     {
-                        'title': 'Advances in Deep Learning for Computer Vision',
-                        'venue': 'Nature Machine Intelligence',
+                        'title': 'Advanced Computer Vision Techniques for Autonomous Systems',
+                        'venue': 'CVPR',
                         'year': 2023
                     }
                 ],
@@ -157,8 +151,8 @@ class Command(BaseCommand):
                 'googleScholarUrl': 'https://scholar.google.com/citations?user=wilson',
                 'acceptingStudents': True,
                 'preferredDegreeLevels': ['MS', 'PhD'],
-                'prerequisites': 'Strong background in machine learning and programming',
-                'contactPreferences': ['in-app', 'email'],
+                'prerequisites': 'Strong background in computer science and mathematics',
+                'contactPreferences': ['email'],
                 'profileCompleteness': 95
             }
         )
@@ -167,11 +161,11 @@ class Command(BaseCommand):
             user=user4,
             defaults={
                 'name': 'Dr. Michael Chen',
-                'title': 'Assistant Professor',
+                'title': 'Professor',
                 'department': 'Electrical Engineering',
                 'institution': 'MIT',
-                'researchAreas': ['Robotics', 'Control Systems', 'Signal Processing'],
-                'researchDescription': 'My research explores advanced control systems and robotics applications, with a focus on autonomous systems.',
+                'researchAreas': ['Robotics', 'Control Systems', 'Autonomous Systems'],
+                'researchDescription': 'My research focuses on control systems and robotics for autonomous applications.',
                 'methods': ['Control Theory', 'Robotics', 'Optimization'],
                 'publications': [
                     {
@@ -190,84 +184,10 @@ class Command(BaseCommand):
             }
         )
         
-        # Create sample research projects
-        project1, created = ResearchProject.objects.get_or_create(
-            title='Computer Vision for Autonomous Driving',
-            defaults={
-                'professor': professor1,
-                'summary': 'Develop computer vision algorithms for autonomous vehicle navigation and safety systems.',
-                'description': 'This project focuses on developing advanced computer vision algorithms that can be used in autonomous driving systems. Students will work on object detection, lane detection, and traffic sign recognition using deep learning techniques.',
-                'researchAreas': ['Computer Vision', 'Machine Learning', 'Autonomous Systems'],
-                'techniques': ['Deep Learning', 'Computer Vision', 'Object Detection'],
-                'datasets': ['KITTI', 'Cityscapes', 'BDD100K'],
-                'tools': ['PyTorch', 'OpenCV', 'TensorFlow'],
-                'desiredSkills': [
-                    {'name': 'Python', 'level': 4},
-                    {'name': 'Computer Vision', 'level': 3},
-                    {'name': 'Deep Learning', 'level': 3}
-                ],
-                'hoursPerWeek': 20,
-                'startWindow': '2024-01-15',
-                'endWindow': '2024-05-15',
-                'compensation': 'Stipend',
-                'location': 'Hybrid',
-                'isActive': True
-            }
-        )
-        
-        project2, created = ResearchProject.objects.get_or_create(
-            title='Robotic Control Systems for Manufacturing',
-            defaults={
-                'professor': professor2,
-                'summary': 'Design and implement control systems for industrial robotics applications.',
-                'description': 'This project involves developing control algorithms for industrial robots used in manufacturing processes. Students will work on trajectory planning, motion control, and safety systems.',
-                'researchAreas': ['Robotics', 'Control Systems', 'Manufacturing'],
-                'techniques': ['Control Theory', 'Trajectory Planning', 'Motion Control'],
-                'datasets': ['Industrial Robot Data'],
-                'tools': ['MATLAB', 'ROS', 'Simulink'],
-                'desiredSkills': [
-                    {'name': 'MATLAB', 'level': 4},
-                    {'name': 'Control Theory', 'level': 4},
-                    {'name': 'Robotics', 'level': 3}
-                ],
-                'hoursPerWeek': 25,
-                'startWindow': '2024-02-01',
-                'endWindow': '2024-08-01',
-                'compensation': 'Stipend',
-                'location': 'On-site',
-                'isActive': True
-            }
-        )
-        
-        project3, created = ResearchProject.objects.get_or_create(
-            title='Natural Language Processing for Healthcare',
-            defaults={
-                'professor': professor1,
-                'summary': 'Develop NLP systems for processing medical documents and patient records.',
-                'description': 'This project focuses on applying natural language processing techniques to healthcare data. Students will work on text classification, information extraction, and medical document analysis.',
-                'researchAreas': ['Natural Language Processing', 'Healthcare', 'Machine Learning'],
-                'techniques': ['NLP', 'Text Classification', 'Information Extraction'],
-                'datasets': ['MIMIC-III', 'PubMed'],
-                'tools': ['Transformers', 'spaCy', 'Hugging Face'],
-                'desiredSkills': [
-                    {'name': 'Python', 'level': 4},
-                    {'name': 'NLP', 'level': 3},
-                    {'name': 'Machine Learning', 'level': 3}
-                ],
-                'hoursPerWeek': 15,
-                'startWindow': '2024-03-01',
-                'endWindow': '2024-06-30',
-                'compensation': 'Credit',
-                'location': 'Remote',
-                'isActive': True
-            }
-        )
-        
         self.stdout.write(
             self.style.SUCCESS(
                 f'Successfully created sample data:\n'
                 f'- {StudentProfile.objects.count()} student profiles\n'
-                f'- {ProfessorProfile.objects.count()} professor profiles\n'
-                f'- {ResearchProject.objects.count()} research projects'
+                f'- {ProfessorProfile.objects.count()} professor profiles'
             )
         )

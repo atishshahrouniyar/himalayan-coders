@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
-import { useStudents, useProfessors, useProjects, useCreateStudent, useApiError } from '@/lib/hooks'
+import { useStudents, useProfessors, useCreateStudent } from '@/lib/hooks'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -11,19 +11,17 @@ import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
 export default function ApiTest() {
-  const [activeTab, setActiveTab] = useState<'students' | 'professors' | 'projects'>('students')
+  const [activeTab, setActiveTab] = useState<'students' | 'professors'>('students')
   const [showCreateForm, setShowCreateForm] = useState(false)
   
   // API hooks
   const { data: studentsData, isLoading: studentsLoading, error: studentsError } = useStudents()
   const { data: professorsData, isLoading: professorsLoading, error: professorsError } = useProfessors()
-  const { data: projectsData, isLoading: projectsLoading, error: projectsError } = useProjects()
   const createStudentMutation = useCreateStudent()
   
   // Error handling
-  const studentsErrorInfo = useApiError(studentsError)
-  const professorsErrorInfo = useApiError(professorsError)
-  const projectsErrorInfo = useApiError(projectsError)
+  const studentsErrorInfo = studentsError
+  const professorsErrorInfo = professorsError
   
   // Form state
   const [formData, setFormData] = useState({
@@ -32,7 +30,7 @@ export default function ApiTest() {
     email: '',
     university: '',
     department: '',
-    degreeLevel: 'BS' as const,
+    degreeLevel: 'BS' as 'BS' | 'MS' | 'PhD' | 'Other',
     year: 2024,
     semester: 1,
     primaryInterests: [] as string[],
@@ -72,14 +70,14 @@ export default function ApiTest() {
       {studentsError && (
         <Card className="border-red-200 bg-red-50">
           <CardContent className="pt-6">
-            <p className="text-red-600">Error: {studentsErrorInfo.message}</p>
+            <p className="text-red-600">Error: {studentsErrorInfo?.message || 'Unknown error'}</p>
           </CardContent>
         </Card>
       )}
       
-      {studentsData?.data && (
+      {studentsData && (
         <div className="grid gap-4">
-          {studentsData.data.map((student) => (
+          {(Array.isArray(studentsData) ? studentsData : studentsData.results || []).map((student: any) => (
             <Card key={student.id}>
               <CardHeader>
                 <CardTitle>{student.firstName} {student.lastName}</CardTitle>
@@ -92,7 +90,7 @@ export default function ApiTest() {
                 </div>
                 {student.primaryInterests.length > 0 && (
                   <div className="flex flex-wrap gap-1">
-                    {student.primaryInterests.map((interest, index) => (
+                    {student.primaryInterests.map((interest: string, index: number) => (
                       <Badge key={index} variant="outline" className="text-xs">
                         {interest}
                       </Badge>
@@ -115,14 +113,14 @@ export default function ApiTest() {
       {professorsError && (
         <Card className="border-red-200 bg-red-50">
           <CardContent className="pt-6">
-            <p className="text-red-600">Error: {professorsErrorInfo.message}</p>
+            <p className="text-red-600">Error: {professorsErrorInfo?.message || 'Unknown error'}</p>
           </CardContent>
         </Card>
       )}
       
-      {professorsData?.data && (
+      {professorsData && (
         <div className="grid gap-4">
-          {professorsData.data.map((professor) => (
+          {(Array.isArray(professorsData) ? professorsData : professorsData.results || []).map((professor: any) => (
             <Card key={professor.id}>
               <CardHeader>
                 <CardTitle>Dr. {professor.name}</CardTitle>
@@ -132,7 +130,7 @@ export default function ApiTest() {
                 <p className="text-sm text-gray-600 mb-2">{professor.department}</p>
                 {professor.researchAreas.length > 0 && (
                   <div className="flex flex-wrap gap-1">
-                    {professor.researchAreas.map((area, index) => (
+                    {professor.researchAreas.map((area: string, index: number) => (
                       <Badge key={index} variant="outline" className="text-xs">
                         {area}
                       </Badge>
@@ -147,50 +145,7 @@ export default function ApiTest() {
     </div>
   )
   
-  const renderProjects = () => (
-    <div className="space-y-4">
-      <h3 className="text-lg font-semibold">Research Projects</h3>
-      
-      {projectsLoading && <p>Loading projects...</p>}
-      {projectsError && (
-        <Card className="border-red-200 bg-red-50">
-          <CardContent className="pt-6">
-            <p className="text-red-600">Error: {projectsErrorInfo.message}</p>
-          </CardContent>
-        </Card>
-      )}
-      
-      {projectsData?.data && (
-        <div className="grid gap-4">
-          {projectsData.data.map((project) => (
-            <Card key={project.id}>
-              <CardHeader>
-                <CardTitle>{project.title}</CardTitle>
-                <CardDescription>{project.professor_name} - {project.professor_institution}</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm mb-2">{project.summary}</p>
-                <div className="flex gap-2 mb-2">
-                  <Badge variant="secondary">{project.compensation}</Badge>
-                  <Badge variant="outline">{project.location}</Badge>
-                  <Badge variant="outline">{project.hoursPerWeek}h/week</Badge>
-                </div>
-                {project.researchAreas.length > 0 && (
-                  <div className="flex flex-wrap gap-1">
-                    {project.researchAreas.map((area, index) => (
-                      <Badge key={index} variant="outline" className="text-xs">
-                        {area}
-                      </Badge>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
-    </div>
-  )
+
   
   return (
     <div className="container mx-auto p-6 max-w-4xl">
@@ -216,18 +171,12 @@ export default function ApiTest() {
             >
               Professors
             </Button>
-            <Button
-              variant={activeTab === 'projects' ? 'default' : 'outline'}
-              onClick={() => setActiveTab('projects')}
-            >
-              Projects
-            </Button>
+
           </div>
           
           {/* Content */}
           {activeTab === 'students' && renderStudents()}
           {activeTab === 'professors' && renderProfessors()}
-          {activeTab === 'projects' && renderProjects()}
         </CardContent>
       </Card>
       

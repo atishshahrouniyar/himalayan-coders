@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
-import { useStudents, useGenerateMatches, useApiError } from '@/lib/hooks'
+import { useStudents, useGenerateMatches } from '@/lib/hooks'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -22,7 +22,7 @@ export default function AiMatchTest() {
   const generateMatchesMutation = useGenerateMatches()
   
   // Error handling
-  const studentsErrorInfo = useApiError(studentsError)
+  const studentsErrorInfo = studentsError
   
   // Debug logging
   console.log('Students data:', studentsData)
@@ -39,15 +39,10 @@ export default function AiMatchTest() {
     try {
       const result = await generateMatchesMutation.mutateAsync({
         studentId: selectedStudent,
-        matchType,
-        useAI
+        useAi: useAI
       })
       
-      if (result.success) {
-        setMatches(result.data)
-      } else {
-        alert('Failed to generate matches')
-      }
+      setMatches(result)
     } catch (error) {
       console.error('Error generating matches:', error)
       alert('Error generating matches')
@@ -61,8 +56,8 @@ export default function AiMatchTest() {
     let student = null
     if (studentsData && Array.isArray(studentsData)) {
       student = studentsData.find(s => s.id === studentId)
-    } else if (studentsData?.data && Array.isArray(studentsData.data)) {
-      student = studentsData.data.find(s => s.id === studentId)
+    } else if (studentsData && typeof studentsData === 'object' && 'results' in studentsData) {
+      student = (studentsData as any).results.find((s: any) => s.id === studentId)
     }
     return student ? `${student.firstName} ${student.lastName}` : 'Unknown Student'
   }
@@ -219,23 +214,24 @@ export default function AiMatchTest() {
                     <SelectValue placeholder="Choose a student" />
                   </SelectTrigger>
                                      <SelectContent>
-                     {studentsData && Array.isArray(studentsData) && studentsData.length > 0 ? (
-                       studentsData.map((student) => (
-                         <SelectItem key={student.id} value={student.id}>
-                           {student.firstName} {student.lastName} - {student.university}
+                     {(() => {
+                       const students = studentsData && Array.isArray(studentsData) 
+                         ? studentsData 
+                         : (studentsData && typeof studentsData === 'object' && 'results' in studentsData 
+                           ? (studentsData as any).results 
+                           : [])
+                                               return students.length > 0 ? (
+                          students.map((student: any) => (
+                           <SelectItem key={student.id} value={student.id}>
+                             {student.firstName} {student.lastName} - {student.university}
+                           </SelectItem>
+                         ))
+                       ) : (
+                         <SelectItem value="no-students" disabled>
+                           {studentsLoading ? 'Loading students...' : 'No students available'}
                          </SelectItem>
-                       ))
-                     ) : studentsData?.data && Array.isArray(studentsData.data) && studentsData.data.length > 0 ? (
-                       studentsData.data.map((student) => (
-                         <SelectItem key={student.id} value={student.id}>
-                           {student.firstName} {student.lastName} - {student.university}
-                         </SelectItem>
-                       ))
-                     ) : (
-                       <SelectItem value="no-students" disabled>
-                         {studentsLoading ? 'Loading students...' : 'No students available'}
-                       </SelectItem>
-                     )}
+                       )
+                     })()}
                    </SelectContent>
                 </Select>
               </div>
@@ -300,7 +296,7 @@ export default function AiMatchTest() {
             {studentsError && (
               <Card className="border-red-200 bg-red-50">
                 <CardContent className="pt-6">
-                  <p className="text-red-600">Error: {studentsErrorInfo.message}</p>
+                  <p className="text-red-600">Error: {studentsErrorInfo?.message || 'Unknown error'}</p>
                 </CardContent>
               </Card>
             )}
@@ -313,7 +309,7 @@ export default function AiMatchTest() {
                 <p className="text-sm">Has Data: {studentsData ? 'Yes' : 'No'}</p>
                 <p className="text-sm">Data Type: {typeof studentsData}</p>
                 <p className="text-sm">Data Keys: {studentsData ? Object.keys(studentsData).join(', ') : 'None'}</p>
-                                 <p className="text-sm">Students Count: {Array.isArray(studentsData) ? studentsData.length : studentsData?.data?.length || 0}</p>
+                                 <p className="text-sm">Students Count: {Array.isArray(studentsData) ? studentsData.length : 0}</p>
                 <pre className="text-xs mt-2 bg-gray-100 p-2 rounded overflow-auto max-h-32">
                   {JSON.stringify(studentsData, null, 2)}
                 </pre>

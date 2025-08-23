@@ -144,7 +144,7 @@ export default function OnboardingPage() {
                   </div>
                   <CardTitle>Professor/Researcher</CardTitle>
                   <CardDescription>
-                    I'm a professor or researcher looking for students to join my projects
+                    I'm a professor or researcher looking for students to join my research
                   </CardDescription>
                 </CardHeader>
               </Card>

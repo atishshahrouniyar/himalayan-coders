@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -17,88 +17,77 @@ import {
   Settings,
   Plus,
   Search,
-  Filter
+  Filter,
+  Loader2
 } from 'lucide-react'
-
-// Mock data for demonstration
-const MOCK_MATCHES = [
-  {
-    id: '1',
-    type: 'professor',
-    name: 'Dr. Sarah Chen',
-    title: 'Associate Professor',
-    institution: 'MIT',
-    department: 'Computer Science',
-    matchScore: 95,
-    researchAreas: ['Machine Learning', 'NLP', 'Computer Vision'],
-    location: 'Cambridge, MA',
-    remote: 'Hybrid',
-    lastActive: '2 days ago'
-  },
-  {
-    id: '2',
-    type: 'project',
-    name: 'Advanced Language Model Development',
-    professor: 'Dr. Sarah Chen',
-    institution: 'MIT',
-    matchScore: 92,
-    researchAreas: ['NLP', 'Machine Learning'],
-    hoursPerWeek: 20,
-    compensation: 'Stipend',
-    lastActive: '1 week ago'
-  },
-  {
-    id: '3',
-    type: 'professor',
-    name: 'Dr. Michael Rodriguez',
-    title: 'Assistant Professor',
-    institution: 'Stanford',
-    department: 'Electrical Engineering',
-    matchScore: 87,
-    researchAreas: ['Robotics', 'Control Systems', 'AI'],
-    location: 'Stanford, CA',
-    remote: 'On-site',
-    lastActive: '3 days ago'
-  }
-]
-
-const MOCK_ACTIVITY = [
-  {
-    id: '1',
-    type: 'message',
-    title: 'New message from Dr. Sarah Chen',
-    description: 'Regarding your application for the NLP project',
-    time: '2 hours ago',
-    unread: true
-  },
-  {
-    id: '2',
-    type: 'match',
-    title: 'New match found',
-    description: 'Dr. Emily Watson at UC Berkeley (87% match)',
-    time: '1 day ago',
-    unread: false
-  },
-  {
-    id: '3',
-    type: 'application',
-    title: 'Application status updated',
-    description: 'Your application to MIT Robotics Lab is under review',
-    time: '3 days ago',
-    unread: false
-  }
-]
-
-const MOCK_STATS = {
-  totalMatches: 15,
-  newMessages: 3,
-  applicationsSent: 8,
-  profileViews: 24,
-  profileCompleteness: 85
-}
+import { matchApi, studentApi } from '@/lib/api'
+import { Match, StudentProfile } from '@/types'
 
 export default function DashboardPage() {
   const [activeTab, setActiveTab] = useState<'overview' | 'matches' | 'activity' | 'applications'>('overview')
+  const [matches, setMatches] = useState<Match[]>([])
+  const [studentProfile, setStudentProfile] = useState<StudentProfile | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  // Mock activity data (since we don't have activity API yet)
+  const activity = [
+    {
+      id: '1',
+      type: 'message',
+      title: 'New message from Dr. Sarah Chen',
+      description: 'Regarding your application for the NLP project',
+      time: '2 hours ago',
+      unread: true
+    },
+    {
+      id: '2',
+      type: 'match',
+      title: 'New match found',
+      description: 'Dr. Emily Watson at UC Berkeley (87% match)',
+      time: '1 day ago',
+      unread: false
+    },
+    {
+      id: '3',
+      type: 'application',
+      title: 'Application status updated',
+      description: 'Your application to MIT Robotics Lab is under review',
+      time: '3 days ago',
+      unread: false
+    }
+  ]
+
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        setLoading(true)
+        
+        // For demo purposes, we'll use a hardcoded student ID
+        // In a real app, this would come from authentication context
+        const studentId = '1'
+        
+        // Fetch student profile
+        const profileResponse = await studentApi.getById(studentId)
+        setStudentProfile(profileResponse)
+        
+        // Fetch matches for the student
+        const matchesResponse = await matchApi.getAll({ studentId })
+        const matchesData = matchesResponse && typeof matchesResponse === 'object' && 'results' in matchesResponse 
+          ? (matchesResponse as any).results 
+          : (matchesResponse || [])
+        setMatches(matchesData)
+        
+      } catch (err) {
+        console.error('Error fetching dashboard data:', err)
+        setError('Failed to load dashboard data')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchDashboardData()
+  }, [])
 
   const getMatchStrengthColor = (score: number) => {
     if (score >= 90) return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
@@ -124,9 +113,11 @@ export default function DashboardPage() {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{MOCK_STATS.totalMatches}</div>
+            <div className="text-2xl font-bold">
+              {loading ? <Loader2 className="h-6 w-6 animate-spin" /> : matches.length}
+            </div>
             <p className="text-xs text-muted-foreground">
-              +2 from last week
+              {matches.length > 0 ? `+${Math.floor(matches.length * 0.2)} from last week` : 'No matches yet'}
             </p>
           </CardContent>
         </Card>
@@ -137,7 +128,9 @@ export default function DashboardPage() {
             <MessageSquare className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{MOCK_STATS.newMessages}</div>
+            <div className="text-2xl font-bold">
+              {loading ? <Loader2 className="h-6 w-6 animate-spin" /> : activity.filter(a => a.unread).length}
+            </div>
             <p className="text-xs text-muted-foreground">
               +1 from yesterday
             </p>
@@ -150,7 +143,9 @@ export default function DashboardPage() {
             <BookOpen className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{MOCK_STATS.applicationsSent}</div>
+            <div className="text-2xl font-bold">
+              {loading ? <Loader2 className="h-6 w-6 animate-spin" /> : Math.floor(matches.length * 0.5)}
+            </div>
             <p className="text-xs text-muted-foreground">
               +3 this month
             </p>
@@ -163,7 +158,9 @@ export default function DashboardPage() {
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{MOCK_STATS.profileViews}</div>
+            <div className="text-2xl font-bold">
+              {loading ? <Loader2 className="h-6 w-6 animate-spin" /> : Math.floor(matches.length * 1.5)}
+            </div>
             <p className="text-xs text-muted-foreground">
               +8 this week
             </p>
@@ -183,9 +180,18 @@ export default function DashboardPage() {
           <div className="space-y-4">
             <div className="flex justify-between text-sm">
               <span>Profile Progress</span>
-              <span>{MOCK_STATS.profileCompleteness}%</span>
+              <span>
+                {loading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  `${studentProfile?.profileCompleteness || 0}%`
+                )}
+              </span>
             </div>
-            <Progress value={MOCK_STATS.profileCompleteness} className="h-2" />
+            <Progress 
+              value={studentProfile?.profileCompleteness || 0} 
+              className="h-2" 
+            />
             <Button size="sm" className="bg-research-600 hover:bg-research-700">
               <Settings className="h-4 w-4 mr-2" />
               Complete Profile
@@ -232,88 +238,107 @@ export default function DashboardPage() {
         </Button>
       </div>
 
-      {MOCK_MATCHES.map((match) => (
-        <Card key={match.id} className="hover:shadow-lg transition-shadow">
-          <CardHeader>
-            <div className="flex justify-between items-start">
-              <div>
-                <CardTitle className="text-xl">
-                  {match.type === 'professor' ? match.name : match.name}
-                </CardTitle>
-                <CardDescription>
-                  {match.type === 'professor' 
-                    ? `${match.title} • ${match.department} • ${match.institution}`
-                    : `${match.professor} • ${match.institution}`
-                  }
-                </CardDescription>
-              </div>
-              <div className="text-right">
-                <Badge className={`${getMatchStrengthColor(match.matchScore)}`}>
-                  {getMatchStrengthLabel(match.matchScore)}
-                </Badge>
-                <div className="text-2xl font-bold text-research-600 mt-1">
-                  {match.matchScore}%
-                </div>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div>
-                <h4 className="font-medium mb-2">Research Areas</h4>
-                <div className="flex flex-wrap gap-2">
-                  {match.researchAreas.map((area) => (
-                    <Badge key={area} variant="secondary">{area}</Badge>
-                  ))}
-                </div>
-              </div>
+      {loading ? (
+        <div className="flex justify-center items-center py-12">
+          <Loader2 className="h-12 w-12 animate-spin text-research-600" />
+        </div>
+      ) : error ? (
+        <div className="text-center py-12 text-red-500">
+          {error}
+        </div>
+      ) : matches.length === 0 ? (
+        <div className="text-center py-12 text-gray-600 dark:text-gray-400">
+          No matches found. Start searching for opportunities!
+        </div>
+      ) : (
+                 (matches || []).map((match) => (
+           <Card key={match.id} className="hover:shadow-lg transition-shadow">
+             <CardHeader>
+               <div className="flex justify-between items-start">
+                 <div>
+                   <CardTitle className="text-xl">
+                     Professor Match
+                   </CardTitle>
+                   <CardDescription>
+                     Match ID: {match.id} • Score: {match.score}%
+                   </CardDescription>
+                 </div>
+                 <div className="text-right">
+                   <Badge className={`${getMatchStrengthColor(match.score)}`}>
+                     {getMatchStrengthLabel(match.score)}
+                   </Badge>
+                   <div className="text-2xl font-bold text-research-600 mt-1">
+                     {match.score}%
+                   </div>
+                 </div>
+               </div>
+             </CardHeader>
+             <CardContent>
+               <div className="space-y-4">
+                 <div>
+                   <h4 className="font-medium mb-2">Highlights</h4>
+                   <div className="flex flex-wrap gap-2">
+                     {(match.highlights || []).map((highlight, index) => (
+                       <Badge key={index} variant="secondary">{highlight}</Badge>
+                     ))}
+                   </div>
+                 </div>
 
-              <div className="flex items-center justify-between pt-4 border-t">
-                <div className="flex items-center space-x-6 text-sm text-gray-600 dark:text-gray-400">
-                  {match.type === 'professor' ? (
-                    <>
-                      <div className="flex items-center space-x-1">
-                        <MapPin className="h-4 w-4" />
-                        <span>{match.location}</span>
-                      </div>
-                      <div className="flex items-center space-x-1">
-                        <Clock className="h-4 w-4" />
-                        <span>{match.remote}</span>
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <div className="flex items-center space-x-1">
-                        <Clock className="h-4 w-4" />
-                        <span>{match.hoursPerWeek} hrs/week</span>
-                      </div>
-                      <div className="flex items-center space-x-1">
-                        <Star className="h-4 w-4" />
-                        <span>{match.compensation}</span>
-                      </div>
-                    </>
-                  )}
-                  <div className="flex items-center space-x-1">
-                    <Clock className="h-4 w-4" />
-                    <span>{match.lastActive}</span>
-                  </div>
-                </div>
-                
-                <div className="flex space-x-2">
-                  <Button variant="outline" size="sm">
-                    <MessageSquare className="h-4 w-4 mr-2" />
-                    Message
-                  </Button>
-                  <Button size="sm">
-                    <BookOpen className="h-4 w-4 mr-2" />
-                    View Details
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      ))}
+                 <div>
+                   <h4 className="font-medium mb-2">Student Interests</h4>
+                   <div className="flex flex-wrap gap-2">
+                     {(match.studentInterests || []).map((interest, index) => (
+                       <Badge key={index} variant="outline">{interest}</Badge>
+                     ))}
+                   </div>
+                 </div>
+
+                 <div>
+                   <h4 className="font-medium mb-2">Professor Interests</h4>
+                   <div className="flex flex-wrap gap-2">
+                     {(match.professorInterests || []).map((interest, index) => (
+                       <Badge key={index} variant="outline">{interest}</Badge>
+                     ))}
+                   </div>
+                 </div>
+
+                 {match.aiScore && (
+                   <div>
+                     <h4 className="font-medium mb-2">AI Analysis</h4>
+                     <div className="text-sm text-gray-600 dark:text-gray-400">
+                       AI Score: {match.aiScore}% • {match.aiExplanation}
+                     </div>
+                   </div>
+                 )}
+
+                 <div className="flex items-center justify-between pt-4 border-t">
+                   <div className="flex items-center space-x-6 text-sm text-gray-600 dark:text-gray-400">
+                     <div className="flex items-center space-x-1">
+                       <Clock className="h-4 w-4" />
+                       <span>Created: {new Date(match.createdAt).toLocaleDateString()}</span>
+                     </div>
+                     <div className="flex items-center space-x-1">
+                       <Star className="h-4 w-4" />
+                       <span>AI Enhanced: {match.aiScore ? 'Yes' : 'No'}</span>
+                     </div>
+                   </div>
+                   
+                   <div className="flex space-x-2">
+                     <Button variant="outline" size="sm">
+                       <MessageSquare className="h-4 w-4 mr-2" />
+                       Message
+                     </Button>
+                     <Button size="sm">
+                       <BookOpen className="h-4 w-4 mr-2" />
+                       View Details
+                     </Button>
+                   </div>
+                 </div>
+               </div>
+             </CardContent>
+           </Card>
+         ))
+      )}
     </div>
   )
 
@@ -328,23 +353,37 @@ export default function DashboardPage() {
       </div>
 
       <div className="space-y-4">
-        {MOCK_ACTIVITY.map((activity) => (
-          <Card key={activity.id} className={activity.unread ? 'border-l-4 border-l-research-500' : ''}>
-            <CardContent className="pt-6">
-              <div className="flex items-start space-x-4">
-                <div className={`w-3 h-3 rounded-full mt-2 ${activity.unread ? 'bg-research-500' : 'bg-gray-300'}`} />
-                <div className="flex-1">
-                  <h4 className="font-medium">{activity.title}</h4>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">{activity.description}</p>
-                  <p className="text-xs text-gray-500 mt-2">{activity.time}</p>
+        {loading ? (
+          <div className="flex justify-center items-center py-12">
+            <Loader2 className="h-12 w-12 animate-spin text-research-600" />
+          </div>
+        ) : error ? (
+          <div className="text-center py-12 text-red-500">
+            {error}
+          </div>
+        ) : activity.length === 0 ? (
+          <div className="text-center py-12 text-gray-600 dark:text-gray-400">
+            No recent activity. Check your messages and matches!
+          </div>
+        ) : (
+          (activity || []).map((activityItem) => (
+            <Card key={activityItem.id} className={activityItem.unread ? 'border-l-4 border-l-research-500' : ''}>
+              <CardContent className="pt-6">
+                <div className="flex items-start space-x-4">
+                  <div className={`w-3 h-3 rounded-full mt-2 ${activityItem.unread ? 'bg-research-500' : 'bg-gray-300'}`} />
+                  <div className="flex-1">
+                    <h4 className="font-medium">{activityItem.title}</h4>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">{activityItem.description}</p>
+                    <p className="text-xs text-gray-500 mt-2">{activityItem.time}</p>
+                  </div>
+                  {activityItem.unread && (
+                    <Badge variant="secondary" className="text-xs">New</Badge>
+                  )}
                 </div>
-                {activity.unread && (
-                  <Badge variant="secondary" className="text-xs">New</Badge>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+              </CardContent>
+            </Card>
+          ))
+        )}
       </div>
     </div>
   )

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -14,125 +14,84 @@ import {
   BookOpen,
   Star,
   MessageSquare,
-  ExternalLink
+  ExternalLink,
+  Loader2
 } from 'lucide-react'
 import { RESEARCH_AREAS, METHODS_TECHNIQUES, DEGREE_LEVELS, COMPENSATION_TYPES } from '@/lib/constants'
-
-// Mock data for demonstration
-const MOCK_PROFESSORS = [
-  {
-    id: '1',
-    name: 'Dr. Sarah Chen',
-    title: 'Associate Professor',
-    department: 'Computer Science',
-    institution: 'MIT',
-    researchAreas: ['Machine Learning', 'NLP', 'Computer Vision'],
-    methods: ['Deep Learning', 'Transformers', 'Neural Networks'],
-    acceptingStudents: true,
-    preferredDegreeLevels: ['MS', 'PhD'],
-    matchScore: 95,
-    location: 'Cambridge, MA',
-    remote: 'Hybrid'
-  },
-  {
-    id: '2',
-    name: 'Dr. Michael Rodriguez',
-    title: 'Assistant Professor',
-    department: 'Electrical Engineering',
-    institution: 'Stanford',
-    researchAreas: ['Robotics', 'Control Systems', 'AI'],
-    methods: ['Reinforcement Learning', 'Control Theory', 'Optimization'],
-    acceptingStudents: true,
-    preferredDegreeLevels: ['BS', 'MS', 'PhD'],
-    matchScore: 87,
-    location: 'Stanford, CA',
-    remote: 'On-site'
-  },
-  {
-    id: '3',
-    name: 'Dr. Emily Watson',
-    title: 'Professor',
-    department: 'Bioinformatics',
-    institution: 'UC Berkeley',
-    researchAreas: ['Bioinformatics', 'Genomics', 'Data Science'],
-    methods: ['Statistical Analysis', 'Machine Learning', 'Data Mining'],
-    acceptingStudents: false,
-    preferredDegreeLevels: ['PhD'],
-    matchScore: 78,
-    location: 'Berkeley, CA',
-    remote: 'Remote'
-  }
-]
-
-const MOCK_PROJECTS = [
-  {
-    id: '1',
-    title: 'Advanced Language Model Development',
-    summary: 'Developing next-generation language models for scientific literature analysis',
-    researchAreas: ['NLP', 'Machine Learning'],
-    techniques: ['Transformers', 'Deep Learning', 'Natural Language Processing'],
-    desiredSkills: ['Python', 'PyTorch', 'NLP'],
-    hoursPerWeek: 20,
-    compensation: 'Stipend',
-    location: 'Remote',
-    professor: 'Dr. Sarah Chen',
-    institution: 'MIT',
-    matchScore: 92
-  },
-  {
-    id: '2',
-    title: 'Autonomous Robot Navigation',
-    summary: 'Building intelligent navigation systems for autonomous robots in complex environments',
-    researchAreas: ['Robotics', 'AI', 'Control Systems'],
-    techniques: ['Reinforcement Learning', 'Computer Vision', 'Path Planning'],
-    desiredSkills: ['Python', 'C++', 'ROS', 'Machine Learning'],
-    hoursPerWeek: 15,
-    compensation: 'Credit',
-    location: 'On-site',
-    professor: 'Dr. Michael Rodriguez',
-    institution: 'Stanford',
-    matchScore: 88
-  }
-]
+import { professorApi, searchApi } from '@/lib/api'
+import { ProfessorProfile } from '@/types'
 
 export default function SearchPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedAreas, setSelectedAreas] = useState<string[]>([])
   const [selectedMethods, setSelectedMethods] = useState<string[]>([])
-  const [selectedDegreeLevel, setSelectedDegreeLevel] = useState('')
-  const [selectedCompensation, setSelectedCompensation] = useState('')
-  const [searchType, setSearchType] = useState<'professors' | 'projects'>('professors')
-  const [showFilters, setShowFilters] = useState(false)
+  const [selectedLevels, setSelectedLevels] = useState<string[]>([])
+  const [selectedCompensation, setSelectedCompensation] = useState<string[]>([])
+  const [professors, setProfessors] = useState<ProfessorProfile[]>([])
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  const filteredProfessors = MOCK_PROFESSORS.filter(prof => {
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true)
+        setError(null)
+
+        const response = await professorApi.getAll({
+          query: searchQuery,
+          tags: selectedAreas,
+          department: selectedAreas.length > 0 ? selectedAreas[0] : undefined
+        })
+        // Handle paginated response
+        let professorsData: ProfessorProfile[] = []
+        if (response && typeof response === 'object' && 'results' in response && Array.isArray((response as any).results)) {
+          professorsData = (response as any).results
+        } else if (Array.isArray(response)) {
+          professorsData = response
+        }
+        
+        setProfessors(professorsData)
+      } catch (err) {
+        console.error('Error fetching data:', err)
+        setError('Failed to load data')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchData()
+  }, [searchQuery, selectedAreas, selectedMethods, selectedLevels, selectedCompensation])
+
+  const handleSearch = async () => {
+    if (!searchQuery.trim()) return
+
+    try {
+      setLoading(true)
+      setError(null)
+
+      const response = await searchApi.global(searchQuery, 'professors')
+      setProfessors(response.professors || [])
+    } catch (err) {
+      console.error('Error searching:', err)
+      setError('Search failed')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const filteredProfessors = (Array.isArray(professors) ? professors : []).filter(prof => {
     if (searchQuery && !prof.name.toLowerCase().includes(searchQuery.toLowerCase()) && 
-        !prof.researchAreas.some(area => area.toLowerCase().includes(searchQuery.toLowerCase()))) {
+        !(prof.researchAreas || []).some(area => area.toLowerCase().includes(searchQuery.toLowerCase()))) {
       return false
     }
-    if (selectedAreas.length > 0 && !selectedAreas.some(area => prof.researchAreas.includes(area))) {
+    if (selectedAreas.length > 0 && !selectedAreas.some(area => (prof.researchAreas || []).includes(area))) {
       return false
     }
-    if (selectedMethods.length > 0 && !selectedMethods.some(method => prof.methods.includes(method))) {
+    if (selectedMethods.length > 0 && !selectedMethods.some(method => (prof.methods || []).includes(method))) {
       return false
     }
-    if (selectedDegreeLevel && !prof.preferredDegreeLevels.includes(selectedDegreeLevel)) {
-      return false
-    }
-    return true
-  })
-
-  const filteredProjects = MOCK_PROJECTS.filter(project => {
-    if (searchQuery && !project.title.toLowerCase().includes(searchQuery.toLowerCase()) && 
-        !project.researchAreas.some(area => area.toLowerCase().includes(searchQuery.toLowerCase()))) {
-      return false
-    }
-    if (selectedAreas.length > 0 && !selectedAreas.some(area => project.researchAreas.includes(area))) {
-      return false
-    }
-    if (selectedMethods.length > 0 && !selectedMethods.some(method => project.techniques.includes(method))) {
-      return false
-    }
-    if (selectedCompensation && project.compensation !== selectedCompensation) {
+    if (selectedLevels.length > 0 && !selectedLevels.some(level => 
+      (prof.preferredDegreeLevels || []).includes(level as 'BS' | 'MS' | 'PhD'))) {
       return false
     }
     return true
@@ -161,28 +120,8 @@ export default function SearchPage() {
             Search Research Opportunities
           </h1>
           <p className="text-gray-600 dark:text-gray-400">
-            Find professors and research projects that match your interests and skills
+            Find professors that match your interests and skills
           </p>
-        </div>
-
-        {/* Search Type Toggle */}
-        <div className="flex space-x-2 mb-6">
-          <Button
-            variant={searchType === 'professors' ? 'default' : 'outline'}
-            onClick={() => setSearchType('professors')}
-            className="flex items-center space-x-2"
-          >
-            <Users className="h-4 w-4" />
-            Professors
-          </Button>
-          <Button
-            variant={searchType === 'projects' ? 'default' : 'outline'}
-            onClick={() => setSearchType('projects')}
-            className="flex items-center space-x-2"
-          >
-            <BookOpen className="h-4 w-4" />
-            Projects
-          </Button>
         </div>
 
         {/* Search Bar and Filters */}
@@ -191,7 +130,7 @@ export default function SearchPage() {
             <div className="flex-1 relative">
               <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
               <Input
-                placeholder={`Search ${searchType}...`}
+                placeholder="Search professors..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10"
@@ -199,111 +138,131 @@ export default function SearchPage() {
             </div>
             <Button
               variant="outline"
-              onClick={() => setShowFilters(!showFilters)}
+              onClick={handleSearch}
+              className="flex items-center space-x-2"
+            >
+              <SearchIcon className="h-4 w-4" />
+              Search
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => setSelectedAreas([])}
               className="flex items-center space-x-2"
             >
               <Filter className="h-4 w-4" />
-              Filters
+              Clear Filters
             </Button>
           </div>
 
           {/* Filters Panel */}
-          {showFilters && (
-            <Card className="mb-6">
-              <CardHeader>
-                <CardTitle className="text-lg">Filters</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                  {/* Research Areas */}
-                  <div>
-                    <label className="block text-sm font-medium mb-3">Research Areas</label>
-                    <div className="space-y-2 max-h-32 overflow-y-auto">
-                      {RESEARCH_AREAS.slice(0, 10).map((area) => (
-                        <label key={area} className="flex items-center space-x-2 cursor-pointer">
-                          <input
-                            type="checkbox"
-                            className="rounded border-gray-300 text-research-600 focus:ring-research-500"
-                            checked={selectedAreas.includes(area)}
-                            onChange={(e) => {
-                              if (e.target.checked) {
-                                setSelectedAreas([...selectedAreas, area])
-                              } else {
-                                setSelectedAreas(selectedAreas.filter(a => a !== area))
-                              }
-                            }}
-                          />
-                          <span className="text-sm">{area}</span>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Methods */}
-                  <div>
-                    <label className="block text-sm font-medium mb-3">Methods</label>
-                    <div className="space-y-2 max-h-32 overflow-y-auto">
-                      {METHODS_TECHNIQUES.slice(0, 10).map((method) => (
-                        <label key={method} className="flex items-center space-x-2 cursor-pointer">
-                          <input
-                            type="checkbox"
-                            className="rounded border-gray-300 text-research-600 focus:ring-research-500"
-                            checked={selectedMethods.includes(method)}
-                            onChange={(e) => {
-                              if (e.target.checked) {
-                                setSelectedMethods([...selectedMethods, method])
-                              } else {
-                                setSelectedMethods(selectedMethods.filter(m => m !== method))
-                              }
-                            }}
-                          />
-                          <span className="text-sm">{method}</span>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Degree Level */}
-                  <div>
-                    <label className="block text-sm font-medium mb-3">Degree Level</label>
-                    <select
-                      className="input-field"
-                      value={selectedDegreeLevel}
-                      onChange={(e) => setSelectedDegreeLevel(e.target.value)}
-                    >
-                      <option value="">Any Level</option>
-                      {DEGREE_LEVELS.map((level) => (
-                        <option key={level} value={level}>{level}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {/* Compensation */}
-                  <div>
-                    <label className="block text-sm font-medium mb-3">Compensation</label>
-                    <select
-                      className="input-field"
-                      value={selectedCompensation}
-                      onChange={(e) => setSelectedCompensation(e.target.value)}
-                    >
-                      <option value="">Any Type</option>
-                      {COMPENSATION_TYPES.map((type) => (
-                        <option key={type} value={type}>{type}</option>
-                      ))}
-                    </select>
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle className="text-lg">Filters</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {/* Research Areas */}
+                <div>
+                  <label className="block text-sm font-medium mb-3">Research Areas</label>
+                  <div className="space-y-2 max-h-32 overflow-y-auto">
+                    {RESEARCH_AREAS.slice(0, 10).map((area) => (
+                      <label key={area} className="flex items-center space-x-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          className="rounded border-gray-300 text-research-600 focus:ring-research-500"
+                          checked={selectedAreas.includes(area)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedAreas([...selectedAreas, area])
+                            } else {
+                              setSelectedAreas(selectedAreas.filter(a => a !== area))
+                            }
+                          }}
+                        />
+                        <span className="text-sm">{area}</span>
+                      </label>
+                    ))}
                   </div>
                 </div>
-              </CardContent>
-            </Card>
-          )}
+
+                {/* Methods */}
+                <div>
+                  <label className="block text-sm font-medium mb-3">Methods</label>
+                  <div className="space-y-2 max-h-32 overflow-y-auto">
+                    {METHODS_TECHNIQUES.slice(0, 10).map((method) => (
+                      <label key={method} className="flex items-center space-x-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          className="rounded border-gray-300 text-research-600 focus:ring-research-500"
+                          checked={selectedMethods.includes(method)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedMethods([...selectedMethods, method])
+                            } else {
+                              setSelectedMethods(selectedMethods.filter(m => m !== method))
+                            }
+                          }}
+                        />
+                        <span className="text-sm">{method}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Degree Level */}
+                <div>
+                  <label className="block text-sm font-medium mb-3">Degree Level</label>
+                  <select
+                    className="input-field"
+                    value={selectedLevels}
+                    onChange={(e) => {
+                      const selected = Array.from(e.target.selectedOptions, option => option.value)
+                      setSelectedLevels(selected)
+                    }}
+                    multiple
+                  >
+                    {DEGREE_LEVELS.map((level) => (
+                      <option key={level} value={level}>{level}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Compensation */}
+                <div>
+                  <label className="block text-sm font-medium mb-3">Compensation</label>
+                  <select
+                    className="input-field"
+                    value={selectedCompensation}
+                    onChange={(e) => {
+                      const selected = Array.from(e.target.selectedOptions, option => option.value)
+                      setSelectedCompensation(selected)
+                    }}
+                    multiple
+                  >
+                    {COMPENSATION_TYPES.map((type) => (
+                      <option key={type} value={type}>{type}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Results */}
         <div className="space-y-6">
-          {searchType === 'professors' ? (
+          {loading && (
+            <div className="flex justify-center items-center py-12">
+              <Loader2 className="h-12 w-12 text-research-600 animate-spin" />
+            </div>
+          )}
+          {error && (
+            <div className="text-center text-red-500 py-12">{error}</div>
+          )}
+          {!loading && !error && (
             <>
               <h2 className="text-xl font-semibold">
-                Professors ({filteredProfessors.length} results)
+                {filteredProfessors.length} Professors
               </h2>
               {filteredProfessors.map((professor) => (
                 <Card key={professor.id} className="hover:shadow-lg transition-shadow">
@@ -316,11 +275,11 @@ export default function SearchPage() {
                         </CardDescription>
                       </div>
                       <div className="text-right">
-                        <Badge className={`${getMatchStrengthColor(professor.matchScore)}`}>
-                          {getMatchStrengthLabel(professor.matchScore)}
+                        <Badge variant="secondary">
+                          {professor.acceptingStudents ? 'Accepting Students' : 'Not Accepting'}
                         </Badge>
                         <div className="text-2xl font-bold text-research-600 mt-1">
-                          {professor.matchScore}%
+                          {professor.profileCompleteness}%
                         </div>
                       </div>
                     </div>
@@ -330,7 +289,7 @@ export default function SearchPage() {
                       <div>
                         <h4 className="font-medium mb-2">Research Areas</h4>
                         <div className="flex flex-wrap gap-2">
-                          {professor.researchAreas.map((area) => (
+                          {(professor.researchAreas || []).map((area) => (
                             <Badge key={area} variant="secondary">{area}</Badge>
                           ))}
                         </div>
@@ -339,7 +298,7 @@ export default function SearchPage() {
                       <div>
                         <h4 className="font-medium mb-2">Methods & Techniques</h4>
                         <div className="flex flex-wrap gap-2">
-                          {professor.methods.map((method) => (
+                          {(professor.methods || []).map((method) => (
                             <Badge key={method} variant="outline">{method}</Badge>
                           ))}
                         </div>
@@ -348,19 +307,15 @@ export default function SearchPage() {
                       <div className="flex items-center justify-between pt-4 border-t">
                         <div className="flex items-center space-x-6 text-sm text-gray-600 dark:text-gray-400">
                           <div className="flex items-center space-x-1">
-                            <MapPin className="h-4 w-4" />
-                            <span>{professor.location}</span>
-                          </div>
-                          <div className="flex items-center space-x-1">
-                            <Clock className="h-4 w-4" />
-                            <span>{professor.remote}</span>
-                          </div>
-                          <div className="flex items-center space-x-1">
                             <Users className="h-4 w-4" />
                             <span>{professor.acceptingStudents ? 'Accepting Students' : 'Not Accepting'}</span>
                           </div>
+                          <div className="flex items-center space-x-1">
+                            <BookOpen className="h-4 w-4" />
+                            <span>Profile: {professor.profileCompleteness}% complete</span>
+                          </div>
                         </div>
-                        
+                       
                         <div className="flex space-x-2">
                           <Button variant="outline" size="sm">
                             <MessageSquare className="h-4 w-4 mr-2" />
@@ -369,85 +324,6 @@ export default function SearchPage() {
                           <Button size="sm">
                             <ExternalLink className="h-4 w-4 mr-2" />
                             View Profile
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </>
-          ) : (
-            <>
-              <h2 className="text-xl font-semibold">
-                Research Projects ({filteredProjects.length} results)
-              </h2>
-              {filteredProjects.map((project) => (
-                <Card key={project.id} className="hover:shadow-lg transition-shadow">
-                  <CardHeader>
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <CardTitle className="text-xl">{project.title}</CardTitle>
-                        <CardDescription>
-                          {project.professor} • {project.institution}
-                        </CardDescription>
-                      </div>
-                      <div className="text-right">
-                        <Badge className={`${getMatchStrengthColor(project.matchScore)}`}>
-                          {getMatchStrengthLabel(project.matchScore)}
-                        </Badge>
-                        <div className="text-2xl font-bold text-research-600 mt-1">
-                          {project.matchScore}%
-                        </div>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      <p className="text-gray-600 dark:text-gray-400">{project.summary}</p>
-                      
-                      <div>
-                        <h4 className="font-medium mb-2">Research Areas</h4>
-                        <div className="flex flex-wrap gap-2">
-                          {project.researchAreas.map((area) => (
-                            <Badge key={area} variant="secondary">{area}</Badge>
-                          ))}
-                        </div>
-                      </div>
-                      
-                      <div>
-                        <h4 className="font-medium mb-2">Required Skills</h4>
-                        <div className="flex flex-wrap gap-2">
-                          {project.desiredSkills.map((skill) => (
-                            <Badge key={skill} variant="outline">{skill}</Badge>
-                          ))}
-                        </div>
-                      </div>
-
-                      <div className="flex items-center justify-between pt-4 border-t">
-                        <div className="flex items-center space-x-6 text-sm text-gray-600 dark:text-gray-400">
-                          <div className="flex items-center space-x-1">
-                            <Clock className="h-4 w-4" />
-                            <span>{project.hoursPerWeek} hrs/week</span>
-                          </div>
-                          <div className="flex items-center space-x-1">
-                            <MapPin className="h-4 w-4" />
-                            <span>{project.location}</span>
-                          </div>
-                          <div className="flex items-center space-x-1">
-                            <Star className="h-4 w-4" />
-                            <span>{project.compensation}</span>
-                          </div>
-                        </div>
-                        
-                        <div className="flex space-x-2">
-                          <Button variant="outline" size="sm">
-                            <MessageSquare className="h-4 w-4 mr-2" />
-                            Contact
-                          </Button>
-                          <Button size="sm">
-                            <ExternalLink className="h-4 w-4 mr-2" />
-                            Apply
                           </Button>
                         </div>
                       </div>

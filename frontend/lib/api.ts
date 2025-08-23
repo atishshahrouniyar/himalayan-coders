@@ -1,11 +1,16 @@
 import { 
   StudentProfile, 
   ProfessorProfile, 
-  ResearchProject, 
-  Match, 
-  SearchFilters,
-  ApiResponse
+  Match 
 } from '@/types'
+
+// API Response types
+interface PaginatedResponse<T> {
+  count: number
+  next: string | null
+  previous: string | null
+  results: T[]
+}
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'
 
@@ -39,7 +44,7 @@ async function handleResponse<T>(response: Response): Promise<T> {
 async function apiRequest<T>(
   endpoint: string,
   options: RequestInit = {}
-): Promise<ApiResponse<T>> {
+): Promise<T> {
   const url = `${API_BASE_URL}${endpoint}`
   
   const defaultOptions: RequestInit = {
@@ -50,13 +55,18 @@ async function apiRequest<T>(
   }
   
   const response = await fetch(url, { ...defaultOptions, ...options })
-  return handleResponse<ApiResponse<T>>(response)
+  return handleResponse<T>(response)
 }
 
 // Student Profile API
 export const studentApi = {
   // Get all students
-  getAll: (filters?: SearchFilters) => {
+  getAll: (filters: {
+    query?: string
+    department?: string
+    level?: string
+    tags?: string[]
+  } = {}) => {
     const params = new URLSearchParams()
     if (filters?.query) params.append('q', filters.query)
     if (filters?.department) params.append('department', filters.department)
@@ -65,7 +75,7 @@ export const studentApi = {
       filters.tags.forEach(tag => params.append('interests', tag))
     }
     
-    return apiRequest<StudentProfile[]>(`/students/?${params.toString()}`)
+    return apiRequest<PaginatedResponse<StudentProfile>>(`/students/?${params.toString()}`)
   },
 
   // Get student by ID
@@ -93,7 +103,12 @@ export const studentApi = {
     }),
 
   // Search students
-  search: (filters: SearchFilters) => {
+  search: (filters: {
+    query?: string
+    department?: string
+    level?: string
+    tags?: string[]
+  } = {}) => {
     const params = new URLSearchParams()
     if (filters.query) params.append('q', filters.query)
     if (filters.department) params.append('department', filters.department)
@@ -109,152 +124,126 @@ export const studentApi = {
 // Professor Profile API
 export const professorApi = {
   // Get all professors
-  getAll: (filters?: SearchFilters) => {
+  getAll: (filters: {
+    query?: string
+    tags?: string[]
+    department?: string
+    acceptingStudents?: boolean
+  } = {}) => {
     const params = new URLSearchParams()
-    if (filters?.query) params.append('q', filters.query)
-    if (filters?.department) params.append('department', filters.department)
-    if (filters?.tags) {
-      filters.tags.forEach(tag => params.append('research_areas', tag))
-    }
+    if (filters.query) params.append('query', filters.query)
+    if (filters.tags?.length) params.append('tags', filters.tags.join(','))
+    if (filters.department) params.append('department', filters.department)
+    if (filters.acceptingStudents !== undefined) params.append('accepting_students', filters.acceptingStudents.toString())
     
-    return apiRequest<ProfessorProfile[]>(`/professors/?${params.toString()}`)
+    return apiRequest<PaginatedResponse<ProfessorProfile>>(`/professors/?${params.toString()}`)
   },
 
   // Get professor by ID
-  getById: (id: string) => 
+  getById: (id: string) =>
     apiRequest<ProfessorProfile>(`/professors/${id}/`),
 
-  // Create new professor profile
+  // Create professor
   create: (data: Partial<ProfessorProfile>) =>
     apiRequest<ProfessorProfile>('/professors/', {
       method: 'POST',
-      body: JSON.stringify(data),
+      body: JSON.stringify(data)
     }),
 
-  // Update professor profile
+  // Update professor
   update: (id: string, data: Partial<ProfessorProfile>) =>
     apiRequest<ProfessorProfile>(`/professors/${id}/`, {
       method: 'PUT',
-      body: JSON.stringify(data),
+      body: JSON.stringify(data)
     }),
 
-  // Delete professor profile
+  // Delete professor
   delete: (id: string) =>
     apiRequest<void>(`/professors/${id}/`, {
-      method: 'DELETE',
+      method: 'DELETE'
     }),
 
   // Search professors
-  search: (filters: SearchFilters) => {
+  search: (filters: {
+    query?: string
+    tags?: string[]
+    department?: string
+    acceptingStudents?: boolean
+  } = {}) => {
     const params = new URLSearchParams()
-    if (filters.query) params.append('q', filters.query)
+    if (filters.query) params.append('query', filters.query)
+    if (filters.tags?.length) params.append('tags', filters.tags.join(','))
     if (filters.department) params.append('department', filters.department)
-    if (filters.tags) {
-      filters.tags.forEach(tag => params.append('research_areas', tag))
-    }
+    if (filters.acceptingStudents !== undefined) params.append('accepting_students', filters.acceptingStudents.toString())
     
     return apiRequest<ProfessorProfile[]>(`/professors/search/?${params.toString()}`)
-  },
+  }
 }
 
-// Research Project API
-export const projectApi = {
-  // Get all projects
-  getAll: (filters?: SearchFilters) => {
-    const params = new URLSearchParams()
-    if (filters?.query) params.append('q', filters.query)
-    if (filters?.tags) {
-      filters.tags.forEach(tag => params.append('research_areas', tag))
-    }
-    if (filters?.compensation) params.append('compensation', filters.compensation)
-    if (filters?.remote !== undefined) params.append('location', filters.remote ? 'Remote' : 'On-site')
-    if (filters?.availability) params.append('min_hours', filters.availability.toString())
-    
-    return apiRequest<ResearchProject[]>(`/projects/?${params.toString()}`)
-  },
-
-  // Get project by ID
-  getById: (id: string) => 
-    apiRequest<ResearchProject>(`/projects/${id}/`),
-
-  // Create new project
-  create: (data: Partial<ResearchProject>) =>
-    apiRequest<ResearchProject>('/projects/', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    }),
-
-  // Update project
-  update: (id: string, data: Partial<ResearchProject>) =>
-    apiRequest<ResearchProject>(`/projects/${id}/`, {
-      method: 'PUT',
-      body: JSON.stringify(data),
-    }),
-
-  // Delete project
-  delete: (id: string) =>
-    apiRequest<void>(`/projects/${id}/`, {
-      method: 'DELETE',
-    }),
-
-  // Search projects
-  search: (filters: SearchFilters) => {
-    const params = new URLSearchParams()
-    if (filters.query) params.append('q', filters.query)
-    if (filters.tags) {
-      filters.tags.forEach(tag => params.append('research_areas', tag))
-    }
-    if (filters.compensation) params.append('compensation', filters.compensation)
-    if (filters.remote !== undefined) params.append('location', filters.remote ? 'Remote' : 'On-site')
-    if (filters.availability) params.append('min_hours', filters.availability.toString())
-    
-    return apiRequest<ResearchProject[]>(`/projects/search/?${params.toString()}`)
-  },
-}
-
-// Match API
 export const matchApi = {
   // Get all matches
-  getAll: () => 
-    apiRequest<Match[]>('/matches/'),
+  getAll: (filters: {
+    studentId?: string
+    professorId?: string
+    minScore?: number
+  } = {}) => {
+    const params = new URLSearchParams()
+    if (filters?.studentId) params.append('student_id', filters.studentId)
+    if (filters?.professorId) params.append('professor_id', filters.professorId)
+    if (filters?.minScore) params.append('min_score', filters.minScore.toString())
+    
+    return apiRequest<PaginatedResponse<Match>>(`/matches/?${params.toString()}`)
+  },
 
   // Get match by ID
-  getById: (id: string) => 
+  getById: (id: string) =>
     apiRequest<Match>(`/matches/${id}/`),
 
-  // Generate matches for a student
-  generateMatches: (studentId: string, matchType: 'professor' | 'project' = 'professor', useAI: boolean = true) =>
-    apiRequest<Match[]>('/matches/generate_matches/', {
+  // Create match
+  create: (data: Partial<Match>) =>
+    apiRequest<Match>('/matches/', {
       method: 'POST',
-      body: JSON.stringify({
-        student_id: studentId,
-        match_type: matchType,
-        use_ai: useAI,
-      }),
+      body: JSON.stringify(data)
     }),
 
-  // Get matches for a student
-  getStudentMatches: (studentId: string) => {
+  // Update match
+  update: (id: string, data: Partial<Match>) =>
+    apiRequest<Match>(`/matches/${id}/`, {
+      method: 'PUT',
+      body: JSON.stringify(data)
+    }),
+
+  // Delete match
+  delete: (id: string) =>
+    apiRequest<void>(`/matches/${id}/`, {
+      method: 'DELETE'
+    }),
+
+  // Generate AI matches
+  generateMatches: (studentId: string, useAi: boolean = true) => {
     const params = new URLSearchParams()
-    params.append('student', studentId)
-    return apiRequest<Match[]>(`/matches/?${params.toString()}`)
-  },
+    params.append('student_id', studentId)
+    params.append('use_ai', useAi.toString())
+    
+    return apiRequest<Match[]>('/matches/generate/', {
+      method: 'POST',
+      body: JSON.stringify({ student_id: studentId, use_ai: useAi })
+    })
+  }
 }
 
-// Search API
 export const searchApi = {
   // Global search across all entities
-  global: (query: string, entityType: 'students' | 'professors' | 'projects' | 'all' = 'all') => {
+  global: (query: string, entityType: 'students' | 'professors' | 'all' = 'all') => {
     const params = new URLSearchParams()
-    params.append('q', query)
+    params.append('query', query)
     params.append('type', entityType)
     
     return apiRequest<{
       students: StudentProfile[]
       professors: ProfessorProfile[]
-      projects: ResearchProject[]
-    }>(`/search/global/?${params.toString()}`)
-  },
+    }>(`/search/?${params.toString()}`)
+  }
 }
 
 // Utility function to check if API is available
