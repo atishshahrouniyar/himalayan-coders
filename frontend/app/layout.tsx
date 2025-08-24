@@ -8,10 +8,10 @@ import { Footer } from '@/components/layout/footer'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'ResearchMatch - Connect Students with Research Opportunities',
+  title: 'MatchEd - Connect Students with Research Opportunities',
   description: 'Find professors whose research areas align with your interests, or discover students that match your active projects.',
   keywords: 'research, academia, students, professors, matching, opportunities',
-  authors: [{ name: 'ResearchMatch Team' }],
+      authors: [{ name: 'MatchEd Team' }],
   viewport: 'width=device-width, initial-scale=1',
   robots: 'index, follow',
 }

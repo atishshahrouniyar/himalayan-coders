@@ -29,7 +29,7 @@ export function Header() {
           <div className="flex items-center space-x-2">
             <Link href="/" className="flex items-center space-x-2">
               <BookOpen className="h-8 w-8 text-research-600" />
-              <span className="text-xl font-bold text-foreground">ResearchMatch</span>
+                              <span className="text-xl font-bold text-foreground">MatchEd</span>
             </Link>
           </div>
 

@@ -50,7 +50,7 @@ module.exports = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
-        // ResearchMatch specific colors
+        // MatchEd specific colors
         research: {
           50: "#f0f9ff",
           100: "#e0f2fe",

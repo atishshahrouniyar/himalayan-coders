@@ -206,7 +206,7 @@ export default function OnboardingPage() {
         return (
           <div className="space-y-6">
             <div className="text-center mb-8">
-              <h2 className="text-2xl font-bold mb-2">Welcome to ResearchMatch!</h2>
+              <h2 className="text-2xl font-bold mb-2">Welcome to MatchEd!</h2>
               <p className="text-gray-600 dark:text-gray-400">
                 Let's get started by understanding your role in the research community.
               </p>

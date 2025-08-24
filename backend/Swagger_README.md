@@ -1,6 +1,6 @@
-# Swagger/OpenAPI Documentation for ResearchMatch API
+# Swagger/OpenAPI Documentation for MatchEd API
 
-This document describes the Swagger/OpenAPI integration for the ResearchMatch Django backend.
+This document describes the Swagger/OpenAPI integration for the MatchEd Django backend.
 
 ## Overview
 
@@ -92,15 +92,15 @@ REST_FRAMEWORK = {
 
 # Spectacular Configuration
 SPECTACULAR_SETTINGS = {
-    'TITLE': 'ResearchMatch API',
+            'TITLE': 'MatchEd API',
     'DESCRIPTION': 'Student-Professor Research Matching Platform API',
     'VERSION': '1.0.0',
     'SERVE_INCLUDE_SCHEMA': False,
     'COMPONENT_SPLIT_REQUEST': True,
     'SCHEMA_PATH_PREFIX': '/api/',
     'CONTACT': {
-        'name': 'ResearchMatch Team',
-        'email': 'support@researchmatch.com',
+        'name': 'MatchEd Team',
+        'email': 'support@matched.com',
     },
     'LICENSE': {
         'name': 'MIT License',

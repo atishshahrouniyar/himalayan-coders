@@ -1,4 +1,4 @@
-# ResearchMatch - Student-Professor Research Matching Platform
+# MatchEd - Student-Professor Research Matching Platform
 
 A full-stack web application that connects students with professors whose research areas align with their interests, and helps professors discover students that match their active projects.
 

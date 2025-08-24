@@ -10,7 +10,7 @@ export function Footer() {
           <div className="space-y-4">
             <div className="flex items-center space-x-2">
               <BookOpen className="h-6 w-6 text-research-600" />
-              <span className="text-lg font-bold">ResearchMatch</span>
+                              <span className="text-lg font-bold">MatchEd</span>
             </div>
             <p className="text-sm text-muted-foreground max-w-xs">
               Connecting students with research opportunities and helping professors find the right candidates for their projects.
@@ -84,14 +84,14 @@ export function Footer() {
               <Link href="https://linkedin.com" className="text-muted-foreground hover:text-foreground transition-colors">
                 <Linkedin className="h-5 w-5" />
               </Link>
-              <Link href="mailto:contact@researchmatch.com" className="text-muted-foreground hover:text-foreground transition-colors">
+                              <Link href="mailto:contact@matched.com" className="text-muted-foreground hover:text-foreground transition-colors">
                 <Mail className="h-5 w-5" />
               </Link>
             </div>
             <p className="text-sm text-muted-foreground">
               Have questions? Reach out to us at{' '}
-              <Link href="mailto:contact@researchmatch.com" className="text-research-600 hover:text-research-700">
-                contact@researchmatch.com
+                              <Link href="mailto:contact@matched.com" className="text-research-600 hover:text-research-700">
+                  contact@matched.com
               </Link>
             </p>
           </div>
@@ -99,7 +99,7 @@ export function Footer() {
 
         <div className="border-t mt-8 pt-8 text-center">
           <p className="text-sm text-muted-foreground">
-            © {new Date().getFullYear()} ResearchMatch. All rights reserved.
+            © {new Date().getFullYear()} MatchEd. All rights reserved.
           </p>
         </div>
       </div>
