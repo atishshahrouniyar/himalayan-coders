@@ -203,14 +203,7 @@ export default function DashboardPage() {
                     </p>
                   </div>
                 </div>
-                {matches.length > 0 && (
-                  <div className="text-right">
-                    <p className="text-sm text-gray-600 dark:text-gray-400">Average Match Score</p>
-                    <p className="text-2xl font-bold text-research-600">
-                      {Math.round(matches.reduce((sum, match) => sum + match.score, 0) / matches.length)}%
-                    </p>
-                  </div>
-                )}
+
               </div>
             </CardContent>
           </Card>
@@ -342,14 +335,11 @@ export default function DashboardPage() {
                           <MapPin className="h-4 w-4" />
                           <span>{match.professor.institution}</span>
                         </div>
-                        <div className="flex items-center space-x-1">
-                          <Star className="h-4 w-4" />
-                          <span>{typeof match.score === 'number' ? match.score.toFixed(2) : match.score}% Match</span>
-                        </div>
+
                         {match.aiScore && (
                           <div className="flex items-center space-x-1">
                             <BookOpen className="h-4 w-4" />
-                            <span>AI Enhanced: {typeof match.aiScore === 'number' ? match.aiScore.toFixed(2) : match.aiScore}%</span>
+                            <span>Match Score: {typeof match.aiScore === 'number' ? match.aiScore.toFixed(2) : match.aiScore}%</span>
                           </div>
                         )}
                       </div>

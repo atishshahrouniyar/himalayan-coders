@@ -6,7 +6,7 @@ import json
 class GeminiMatchingService:
     def __init__(self):
         genai.configure(api_key=settings.GEMINI_API_KEY)
-        self.model = genai.GenerativeModel('gemini-pro')
+        self.model = genai.GenerativeModel('gemini-1.5-pro')
     
     def analyze_student_profile(self, student_data: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -41,6 +41,7 @@ class GeminiMatchingService:
         
         try:
             response = self.model.generate_content(prompt)
+            print(response.text)
             return json.loads(response.text)
         except Exception as e:
             print(f"Error analyzing student profile: {e}")
@@ -83,6 +84,7 @@ class GeminiMatchingService:
         
         try:
             response = self.model.generate_content(prompt)
+            print(response.text)
             return json.loads(response.text)
         except Exception as e:
             print(f"Error analyzing professor profile: {e}")
@@ -131,6 +133,7 @@ class GeminiMatchingService:
         
         try:
             response = self.model.generate_content(prompt)
+            print(response.text)
             match_result = json.loads(response.text)
             
             return (
