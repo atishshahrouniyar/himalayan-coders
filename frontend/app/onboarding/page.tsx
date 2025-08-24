@@ -152,7 +152,6 @@ export default function OnboardingPage() {
         labWebsite: userRole === 'professor' ? profileData.personalWebsite || '' : undefined,
         fundingAvailable: userRole === 'professor' ? true : undefined,
         mentorshipStyle: userRole === 'professor' ? 'Collaborative' : undefined,
-        publications: userRole === 'professor' ? (profileData.publications || []) : undefined,
         grants: userRole === 'professor' ? (profileData.grants || []) : undefined,
         collaborations: userRole === 'professor' ? (profileData.collaborations || []) : undefined,
         teachingExperience: userRole === 'professor' ? (profileData.teachingExperience || []) : undefined,
@@ -179,6 +178,10 @@ export default function OnboardingPage() {
         createdProfile = await studentApi.create(profilePayload)
         // Save user session data
         userSession.saveUserSession(createdProfile.id, 'student')
+        
+        // Show success message for students
+        setError(null)
+        alert('Profile created successfully! We are now finding the best professors for your research interests. This may take a few minutes.')
       } else {
         createdProfile = await professorApi.create(profilePayload)
         // Save user session data

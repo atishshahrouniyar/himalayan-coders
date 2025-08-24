@@ -102,6 +102,16 @@ export const studentApi = {
       method: 'DELETE',
     }),
 
+  // Get matching status
+  getMatchingStatus: (id: string) =>
+    apiRequest<{
+      status: 'pending' | 'in_progress' | 'completed' | 'failed' | 'not_found'
+      progress: number
+      started_at: string | null
+      completed_at: string | null
+      error: string | null
+    }>(`/students/${id}/matching_status/`),
+
   // Search students
   search: (filters: {
     query?: string

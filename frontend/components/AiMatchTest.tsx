@@ -60,7 +60,7 @@ export default function AiMatchTest() {
               {match.aiScore && (
                 <Badge variant="secondary" className="ml-2">
                   <Brain className="h-3 w-3 mr-1" />
-                                     AI Score: {typeof match.aiScore === 'number' ? match.aiScore.toFixed(1) : match.aiScore}
+                                     AI Score: {typeof match.aiScore === 'number' ? match.aiScore.toFixed(2) : match.aiScore}
                 </Badge>
               )}
             </CardTitle>
@@ -70,7 +70,7 @@ export default function AiMatchTest() {
           </div>
           <div className="text-right">
                          <div className="text-2xl font-bold text-green-600">
-               {typeof match.score === 'number' ? match.score.toFixed(1) : match.score}
+                               {typeof match.score === 'number' ? match.score.toFixed(2) : match.score}
              </div>
             <div className="text-sm text-gray-500">Match Score</div>
           </div>

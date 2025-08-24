@@ -183,7 +183,7 @@ class GeminiMatchingService:
             return response.text.strip()
         except Exception as e:
             print(f"Error generating match explanation: {e}")
-            return f"This match has a score of {match_score}/100 based on research area alignment and skill compatibility."
+            return f"This match has a score of {round(match_score, 2)}/100 based on research area alignment and skill compatibility."
 
     def analyze_match(self, student_data: Dict[str, Any], professor_data: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -194,7 +194,7 @@ class GeminiMatchingService:
             explanation = self.generate_match_explanation(student_data, professor_data, score)
             
             return {
-                'score': score,
+                'score': round(score, 2),
                 'explanation': explanation,
                 'highlights': highlights,
                 'analysis': detailed_analysis
@@ -204,8 +204,8 @@ class GeminiMatchingService:
             # Fallback to basic matching
             score, highlights, _ = self._calculate_basic_match_score(student_data, professor_data)
             return {
-                'score': score,
-                'explanation': f"This match has a score of {score}/100 based on research area alignment and skill compatibility.",
+                'score': round(score, 2),
+                'explanation': f"This match has a score of {round(score, 2)}/100 based on research area alignment and skill compatibility.",
                 'highlights': highlights,
-                'analysis': {'overall_score': score, 'highlights': highlights}
+                'analysis': {'overall_score': round(score, 2), 'highlights': highlights}
             }

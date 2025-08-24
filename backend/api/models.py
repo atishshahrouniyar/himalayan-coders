@@ -76,6 +76,23 @@ class StudentProfile(models.Model):
     
     # Metadata
     profileCompleteness = models.IntegerField(default=0)
+    
+    # Matching Status
+    matchingStatus = models.CharField(
+        max_length=20, 
+        choices=[
+            ('pending', 'Pending'),
+            ('in_progress', 'In Progress'),
+            ('completed', 'Completed'),
+            ('failed', 'Failed')
+        ],
+        default='pending'
+    )
+    matchingProgress = models.IntegerField(default=0)  # 0-100 percentage
+    matchingStartedAt = models.DateTimeField(blank=True, null=True)
+    matchingCompletedAt = models.DateTimeField(blank=True, null=True)
+    matchingError = models.TextField(blank=True, null=True)
+    
     createdAt = models.DateTimeField(auto_now_add=True)
     updatedAt = models.DateTimeField(auto_now=True)
     

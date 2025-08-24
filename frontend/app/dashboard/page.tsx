@@ -13,7 +13,7 @@ import {
   Loader2,
   ExternalLink
 } from 'lucide-react'
-import { matchApi } from '@/lib/api'
+import { matchApi, studentApi } from '@/lib/api'
 import { Match } from '@/types'
 import { userSession } from '@/lib/utils'
 
@@ -21,9 +21,16 @@ export default function DashboardPage() {
   const [matches, setMatches] = useState<Match[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [matchingStatus, setMatchingStatus] = useState<{
+    status: 'pending' | 'in_progress' | 'completed' | 'failed' | 'not_found'
+    progress: number
+    started_at: string | null
+    completed_at: string | null
+    error: string | null
+  } | null>(null)
 
   useEffect(() => {
-    const fetchMatches = async () => {
+    const fetchData = async () => {
       try {
         setLoading(true)
         setError(null)
@@ -38,6 +45,14 @@ export default function DashboardPage() {
         }
         
         const studentId = currentUser.id
+        
+        // Fetch matching status
+        try {
+          const statusResponse = await studentApi.getMatchingStatus(studentId)
+          setMatchingStatus(statusResponse)
+        } catch (err) {
+          console.error('Error fetching matching status:', err)
+        }
         
         // Fetch matches for the student
         const matchesResponse = await matchApi.getAll({ studentId })
@@ -66,15 +81,62 @@ export default function DashboardPage() {
         setMatches(uniqueMatches)
         
       } catch (err) {
-        console.error('Error fetching matches:', err)
-        setError('Failed to load your matches')
+        console.error('Error fetching data:', err)
+        setError('Failed to load your data')
       } finally {
         setLoading(false)
       }
     }
 
-    fetchMatches()
+    fetchData()
   }, [])
+
+  // Poll for matching status updates when matching is in progress
+  useEffect(() => {
+    if (!matchingStatus || matchingStatus.status !== 'in_progress') {
+      return
+    }
+
+    const pollInterval = setInterval(async () => {
+      try {
+        const currentUser = userSession.getCurrentUser()
+        if (!currentUser || currentUser.role !== 'student') {
+          return
+        }
+
+        const statusResponse = await studentApi.getMatchingStatus(currentUser.id)
+        setMatchingStatus(statusResponse)
+
+        // If matching is completed, refresh matches
+        if (statusResponse.status === 'completed') {
+          const matchesResponse = await matchApi.getAll({ studentId: currentUser.id })
+          const matchesData = matchesResponse && typeof matchesResponse === 'object' && 'results' in matchesResponse 
+            ? (matchesResponse as any).results 
+            : (matchesResponse || [])
+          
+          const uniqueMatches = matchesData.reduce((acc: Match[], currentMatch: Match) => {
+            const existingMatch = acc.find(match => match.professor.id === currentMatch.professor.id)
+            
+            if (!existingMatch) {
+              acc.push(currentMatch)
+            } else if (currentMatch.score > existingMatch.score) {
+              const index = acc.findIndex(match => match.professor.id === currentMatch.professor.id)
+              acc[index] = currentMatch
+            }
+            
+            return acc
+          }, [])
+          
+          uniqueMatches.sort((a: Match, b: Match) => b.score - a.score)
+          setMatches(uniqueMatches)
+        }
+      } catch (err) {
+        console.error('Error polling matching status:', err)
+      }
+    }, 3000) // Poll every 3 seconds
+
+    return () => clearInterval(pollInterval)
+  }, [matchingStatus])
 
   const getMatchStrengthColor = (score: number) => {
     if (score >= 90) return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
@@ -154,8 +216,88 @@ export default function DashboardPage() {
           </Card>
         </div>
 
+        {/* Matching Progress */}
+        {matchingStatus && matchingStatus.status === 'in_progress' && (
+          <div className="mb-8">
+            <Card>
+              <CardContent className="pt-6">
+                <div className="space-y-4">
+                  <div className="flex items-center space-x-3">
+                    <Loader2 className="h-6 w-6 animate-spin text-research-600" />
+                    <div>
+                      <h3 className="font-semibold">Matching in Progress</h3>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        Finding the best professors for your research interests...
+                      </p>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span>Progress</span>
+                      <span>{matchingStatus.progress}%</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2 dark:bg-gray-700">
+                      <div 
+                        className="bg-research-600 h-2 rounded-full transition-all duration-300"
+                        style={{ width: `${matchingStatus.progress}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Matching Failed */}
+        {matchingStatus && matchingStatus.status === 'failed' && (
+          <div className="mb-8">
+            <Card className="border-red-200 bg-red-50 dark:bg-red-900/20">
+              <CardContent className="pt-6">
+                <div className="space-y-2">
+                  <h3 className="font-semibold text-red-700 dark:text-red-300">Matching Failed</h3>
+                  <p className="text-sm text-red-600 dark:text-red-400">
+                    {matchingStatus.error || 'An error occurred during the matching process.'}
+                  </p>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => window.location.reload()}
+                    className="mt-2"
+                  >
+                    Try Again
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
         {/* Matches List */}
-        {matches.length === 0 ? (
+        {matchingStatus && matchingStatus.status === 'in_progress' ? (
+          <Card>
+            <CardContent className="pt-12 pb-12">
+              <div className="text-center">
+                <Loader2 className="h-16 w-16 text-research-600 animate-spin mx-auto mb-4" />
+                <h3 className="text-xl font-semibold mb-2">Finding Your Matches</h3>
+                <p className="text-gray-600 dark:text-gray-400 mb-6 max-w-md mx-auto">
+                  We're analyzing your profile and finding the best professors for your research interests. This may take a few minutes.
+                </p>
+                <div className="space-y-2">
+                  <div className="flex justify-center">
+                    <div className="w-64 bg-gray-200 rounded-full h-2 dark:bg-gray-700">
+                      <div 
+                        className="bg-research-600 h-2 rounded-full transition-all duration-300"
+                        style={{ width: `${matchingStatus.progress}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                  <p className="text-sm text-gray-500">{matchingStatus.progress}% Complete</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ) : matches.length === 0 ? (
           <Card>
             <CardContent className="pt-12 pb-12">
               <div className="text-center">
@@ -202,12 +344,12 @@ export default function DashboardPage() {
                         </div>
                         <div className="flex items-center space-x-1">
                           <Star className="h-4 w-4" />
-                          <span>{match.score}% Match</span>
+                          <span>{typeof match.score === 'number' ? match.score.toFixed(2) : match.score}% Match</span>
                         </div>
                         {match.aiScore && (
                           <div className="flex items-center space-x-1">
                             <BookOpen className="h-4 w-4" />
-                            <span>AI Enhanced: {match.aiScore}%</span>
+                            <span>AI Enhanced: {typeof match.aiScore === 'number' ? match.aiScore.toFixed(2) : match.aiScore}%</span>
                           </div>
                         )}
                       </div>

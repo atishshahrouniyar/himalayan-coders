@@ -12,6 +12,7 @@ from .serializers import (
     StudentProfileListSerializer, ProfessorProfileListSerializer
 )
 from .gemini_service import GeminiMatchingService
+from .matching_service import MatchingService
 
 @extend_schema_view(
     list=extend_schema(
@@ -49,6 +50,19 @@ class StudentProfileViewSet(viewsets.ModelViewSet):
         if self.action == 'list':
             return StudentProfileListSerializer
         return StudentProfileSerializer
+    
+    def create(self, request, *args, **kwargs):
+        """Create a new student profile and trigger matching"""
+        response = super().create(request, *args, **kwargs)
+        
+        # Start matching process in background
+        if response.status_code == 201:  # Created successfully
+            student_id = response.data.get('id')
+            if student_id:
+                matching_service = MatchingService()
+                matching_service.start_matching_for_student(student_id)
+        
+        return response
     
     @extend_schema(
         summary="Search students",
@@ -127,6 +141,29 @@ class StudentProfileViewSet(viewsets.ModelViewSet):
             'data': serializer.data,
             'total': queryset.count()
         })
+    
+    @extend_schema(
+        summary="Get matching status",
+        description="Get the current matching status for a student",
+        tags=['students']
+    )
+    @action(detail=True, methods=['get'])
+    def matching_status(self, request, pk=None):
+        """Get the matching status for a student"""
+        try:
+            student = self.get_object()
+            matching_service = MatchingService()
+            status = matching_service.get_matching_status(student.id)
+            
+            return Response({
+                'success': True,
+                'data': status
+            })
+        except StudentProfile.DoesNotExist:
+            return Response({
+                'success': False,
+                'error': 'Student not found'
+            }, status=404)
 
 @extend_schema_view(
     list=extend_schema(
