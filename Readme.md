@@ -151,15 +151,12 @@ MatchEd is an intelligent research matching platform that uses AI-powered algori
 
 ### Development Team
 
-**Atish Shahrouniyar** - *Full Stack Developer & Project Lead*
-- **Role**: Lead developer, architecture design, full-stack implementation
-- **Responsibilities**: 
-  - Backend API development with Django REST Framework
-  - Frontend development with Next.js and TypeScript
-  - AI integration with Google Gemini
-  - Database design and optimization
-  - Real-time matching system implementation
-  - Project coordination and deployment
+**Atish Shah Rouniyar** - Full Stack Developer\
+**Sajani Shrestha** - Project Manager \
+**Barsha Poudel** - UI/UX Designer \
+**Kaushal Dhungel** - Full Stack Developer\
+**Miniyan Parajuli** - Frontend Developer
+
 
 ### Key Contributions
 
@@ -214,40 +211,3 @@ himalayan/
 
 Currently using session-based management with localStorage. Ready for JWT or OAuth integration.
 
-## 🚀 Deployment
-
-### Production Setup
-
-1. **Environment Variables**: Configure production environment variables
-2. **Database**: Set up PostgreSQL production database
-3. **Static Files**: Configure static file serving
-4. **SSL**: Set up HTTPS certificates
-5. **Monitoring**: Add logging and monitoring
-
-### Deployment Options
-
-- **Vercel**: Frontend deployment
-- **Railway/Heroku**: Backend deployment
-- **AWS**: Full-stack deployment
-- **Docker**: Containerized deployment
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test thoroughly
-5. Submit a pull request
-
-## 📄 License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## 📞 Contact
-
-- **Email**: contact@matched.com
-- **GitHub**: [atishshahrouniyar/himalayan-coders](https://github.com/atishshahrouniyar/himalayan-coders)
-
----
-
-**MatchEd** - Connecting students and professors for meaningful research partnerships.
